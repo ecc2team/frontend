@@ -1,11 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from "react";
+import styled from "@emotion/styled";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "./assets/vite.svg";
+import heroImg from "./assets/hero.png";
+import "./App.css";
+
+const EmotionButton = styled.button`
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #45a049;
+  }
+`;
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
 
   return (
     <>
@@ -28,6 +43,8 @@ function App() {
         >
           Count is {count}
         </button>
+
+        <EmotionButton>Emotion 버튼</EmotionButton>
       </section>
 
       <div className="ticks"></div>
@@ -116,7 +133,7 @@ function App() {
       <div className="ticks"></div>
       <section id="spacer"></section>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
