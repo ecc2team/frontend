@@ -1,6 +1,7 @@
 import styled from "@emotion/styled";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import SearchBar from "../components/SearchBar";
 import heroImage from "../assets/zeropick-hero.png";
 
 const categories = [
@@ -95,57 +96,9 @@ const Description = styled.p`
   }
 `;
 
-const SearchForm = styled.form`
-  display: flex;
+const HomeSearchBar = styled(SearchBar)`
   width: 547px;
   max-width: 100%;
-  height: 60px;
-`;
-
-const SearchInput = styled.input`
-  min-width: 0;
-  flex: 1;
-  padding: 0 50px;
-  border: 1px solid #a032be;
-  border-right: 0;
-  border-radius: 10px 0 0 10px;
-  background: #fff;
-  color: #332d33;
-  outline: none;
-  font:
-    700 20px/1 Inter,
-    Arial,
-    sans-serif;
-
-  &::placeholder {
-    color: #8f8686;
-    opacity: 1;
-  }
-  &:focus {
-    box-shadow: inset 0 0 0 1px #a032be;
-  }
-
-  @media (max-width: 760px) {
-    padding-inline: 22px;
-    font-size: 16px;
-  }
-`;
-
-const SearchButton = styled.button`
-  width: 71px;
-  border: 0;
-  border-radius: 10px;
-  background: #a032be;
-  color: #fff;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  margin-left: -10px;
-
-  svg {
-    width: 36px;
-    height: 36px;
-  }
 `;
 
 const Visual = styled.div`
@@ -215,9 +168,7 @@ const CategoryPanel = styled.nav`
 function Home() {
   const navigate = useNavigate();
 
-  const handleSearch = (event) => {
-    event.preventDefault();
-    const query = new FormData(event.currentTarget).get("query")?.trim();
+  const handleSearch = (query) => {
     navigate(query ? `/search?query=${encodeURIComponent(query)}` : "/search");
   };
 
@@ -237,30 +188,7 @@ function Home() {
               <br />
               건강한 선택을 시작해보세요!
             </Description>
-            <SearchForm role="search" onSubmit={handleSearch}>
-              <SearchInput
-                name="query"
-                aria-label="제품명 또는 성분 검색"
-                placeholder="제품명, 성분을 검색해보세요"
-              />
-              <SearchButton type="submit" aria-label="검색">
-                <svg viewBox="0 0 36 36" fill="none" aria-hidden="true">
-                  <circle
-                    cx="15"
-                    cy="15"
-                    r="10.5"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="m23 23 9 9"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </SearchButton>
-            </SearchForm>
+            <HomeSearchBar onSearch={handleSearch} />
           </Copy>
           <Visual>
             <img src={heroImage} alt="다양한 제로 식품" />

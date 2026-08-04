@@ -18,9 +18,8 @@ async function enableMocking() {
 async function bootstrap() {
   try {
     await enableMocking();
-    console.log("MSW 시작 성공");
-  } catch (error) {
-    console.error("MSW 시작 실패:", error);
+  } catch {
+    // Mock 서버를 사용할 수 없어도 애플리케이션 자체는 렌더링한다.
   }
 
   createRoot(document.getElementById("root")).render(
