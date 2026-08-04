@@ -1,5 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import SectionPage from "./pages/SectionPage";
 
 const routes = [
@@ -9,8 +11,8 @@ const routes = [
   ["/compare", "비교함"],
   ["/group-buy", "공구"],
   ["/records", "기록"],
-  ["/login", "로그인"],
-  ["/signup", "회원가입"],
+  ["/auth/kakao", "카카오 로그인"],
+  ["/auth/google", "Google 로그인"],
   ["/categories/drinks", "음료수"],
   ["/categories/protein-bars", "단백질 바"],
   ["/categories/snacks", "간식류"],
@@ -24,9 +26,18 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/search" element={<SectionPage title="검색 결과" showQuery />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/search"
+          element={<SectionPage title="검색 결과" showQuery />}
+        />
         {routes.map(([path, title]) => (
-          <Route key={path} path={path} element={<SectionPage title={title} />} />
+          <Route
+            key={path}
+            path={path}
+            element={<SectionPage title={title} />}
+          />
         ))}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

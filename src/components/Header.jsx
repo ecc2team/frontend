@@ -71,8 +71,15 @@ const Brand = styled(Link)`
   }
 
   @media (max-width: 900px) {
-    img:first-of-type { width: 76px; height: 76px; }
-    img:last-of-type { width: 128px; height: 61px; margin-left: -14px; }
+    img:first-of-type {
+      width: 76px;
+      height: 76px;
+    }
+    img:last-of-type {
+      width: 128px;
+      height: 61px;
+      margin-left: -14px;
+    }
   }
 `;
 
@@ -126,7 +133,10 @@ const Action = styled(Link)`
   border-radius: 50px;
   background: ${({ $primary }) => ($primary ? "#df69ff" : "#fff")};
   color: ${({ $primary }) => ($primary ? "#fff" : "#000")};
-  font: 700 25px/1 Inter, Arial, sans-serif;
+  font:
+    700 25px/1 Inter,
+    Arial,
+    sans-serif;
   white-space: nowrap;
   cursor: pointer;
   display: inline-flex;
@@ -162,13 +172,21 @@ function Header() {
           <img src={logoWordmark} alt="ZeroPick" />
         </Brand>
         <Nav aria-label="주요 메뉴">
-          {navItems.map(([label, path]) => <Link to={path} key={path}>{label}</Link>)}
+          {navItems.map(([label, path]) => (
+            <Link to={path} key={path}>
+              {label}
+            </Link>
+          ))}
         </Nav>
         <Actions>
           <Action to="/login">로그인</Action>
-          <Action to="/signup" $primary>회원가입</Action>
+          <Action to="/signup" $primary>
+            회원가입
+          </Action>
         </Actions>
-        <MobileMenu type="button" aria-label="메뉴 열기">☰</MobileMenu>
+        <MobileMenu type="button" aria-label="메뉴 열기">
+          ☰
+        </MobileMenu>
       </Inner>
     </Shell>
   );

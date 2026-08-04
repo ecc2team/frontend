@@ -61,10 +61,15 @@ const Copy = styled.div`
 
 const Title = styled.h1`
   margin: 0;
-  font: 700 64px/1.15 Inter, Arial, sans-serif;
+  font:
+    700 64px/1.15 Inter,
+    Arial,
+    sans-serif;
   letter-spacing: -2.6px;
 
-  span { color: #df69ff; }
+  span {
+    color: #df69ff;
+  }
 
   @media (max-width: 1100px) {
     font-size: 52px;
@@ -78,7 +83,10 @@ const Title = styled.h1`
 const Description = styled.p`
   margin: 23px 0 47px;
   color: #5c5454;
-  font: 700 24px/1.25 Inter, Arial, sans-serif;
+  font:
+    700 24px/1.25 Inter,
+    Arial,
+    sans-serif;
   letter-spacing: -0.7px;
 
   @media (max-width: 760px) {
@@ -104,10 +112,18 @@ const SearchInput = styled.input`
   background: #fff;
   color: #332d33;
   outline: none;
-  font: 700 20px/1 Inter, Arial, sans-serif;
+  font:
+    700 20px/1 Inter,
+    Arial,
+    sans-serif;
 
-  &::placeholder { color: #8f8686; opacity: 1; }
-  &:focus { box-shadow: inset 0 0 0 1px #a032be; }
+  &::placeholder {
+    color: #8f8686;
+    opacity: 1;
+  }
+  &:focus {
+    box-shadow: inset 0 0 0 1px #a032be;
+  }
 
   @media (max-width: 760px) {
     padding-inline: 22px;
@@ -126,7 +142,10 @@ const SearchButton = styled.button`
   place-items: center;
   margin-left: -10px;
 
-  svg { width: 36px; height: 36px; }
+  svg {
+    width: 36px;
+    height: 36px;
+  }
 `;
 
 const Visual = styled.div`
@@ -143,7 +162,9 @@ const Visual = styled.div`
     height: auto;
     margin-top: 32px;
 
-    img { aspect-ratio: 3 / 2; }
+    img {
+      aspect-ratio: 3 / 2;
+    }
   }
 `;
 
@@ -206,22 +227,51 @@ function Home() {
       <Main>
         <Hero>
           <Copy>
-            <Title>성분을 알면,<br /><span>선택</span>이 바뀝니다.</Title>
-            <Description>나에게 맞는 제로 식품을 찾고<br />건강한 선택을 시작해보세요!</Description>
+            <Title>
+              성분을 알면,
+              <br />
+              <span>선택</span>이 바뀝니다.
+            </Title>
+            <Description>
+              나에게 맞는 제로 식품을 찾고
+              <br />
+              건강한 선택을 시작해보세요!
+            </Description>
             <SearchForm role="search" onSubmit={handleSearch}>
-              <SearchInput name="query" aria-label="제품명 또는 성분 검색" placeholder="제품명, 성분을 검색해보세요" />
+              <SearchInput
+                name="query"
+                aria-label="제품명 또는 성분 검색"
+                placeholder="제품명, 성분을 검색해보세요"
+              />
               <SearchButton type="submit" aria-label="검색">
                 <svg viewBox="0 0 36 36" fill="none" aria-hidden="true">
-                  <circle cx="15" cy="15" r="10.5" stroke="currentColor" strokeWidth="3" />
-                  <path d="m23 23 9 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  <circle
+                    cx="15"
+                    cy="15"
+                    r="10.5"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                  />
+                  <path
+                    d="m23 23 9 9"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </SearchButton>
             </SearchForm>
           </Copy>
-          <Visual><img src={heroImage} alt="다양한 제로 식품" /></Visual>
+          <Visual>
+            <img src={heroImage} alt="다양한 제로 식품" />
+          </Visual>
         </Hero>
         <CategoryPanel aria-label="제품 카테고리">
-          {categories.map(([label, path]) => <Link to={path} key={path}>{label}</Link>)}
+          {categories.map(([label, path]) => (
+            <Link to={path} key={path}>
+              {label}
+            </Link>
+          ))}
         </CategoryPanel>
       </Main>
     </Page>
