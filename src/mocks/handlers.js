@@ -17,6 +17,10 @@ const createSearchResult = (product) => ({
 const createProductDetail = (product) => ({
   productId: product.productId,
   productName: product.productName,
+  imageUrl: product.imageUrl,
+  calories: product.calories,
+  weight: product.weight,
+  keyIngredients: product.keyIngredients,
   grade: product.grade,
   warningAdditive: product.warningAdditive,
   nutrition: product.nutrition,
