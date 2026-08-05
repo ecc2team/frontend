@@ -45,17 +45,52 @@ const Category = styled.span`
   font-weight: 700;
   white-space: nowrap;
 `;
-const ResultPanel = styled.section`
+const SortPanel = styled.div`
+  width: min(1028px, 100%);
   min-height: 68px;
-  padding: 16px 50px;
+  margin: 0 auto 17px;
+  padding: 13px 38px;
   border: 1px solid #f3deff;
   border-radius: 10px;
   background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 35px;
+
+  @media (max-width: 600px) {
+    padding-inline: 20px;
+    gap: 18px;
+  }
+`;
+const SortLabel = styled.label`
+  flex: 0 0 auto;
+  font-size: 18px;
+  font-weight: 700;
+`;
+const SortSelect = styled.select`
+  width: min(309px, 100%);
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid #df6bff;
+  border-radius: 10px;
+  background: #fff;
+  color: #332d33;
+  font-size: 17px;
+  cursor: pointer;
+  outline: none;
+
+  &:focus-visible {
+    outline: 3px solid #df6bff;
+    outline-offset: 2px;
+  }
+`;
+const ResultPanel = styled.section`
+  padding: 0;
 `;
 const Count = styled.h1`
   margin: 0;
-  font-size: 25px;
-  line-height: 35px;
+  font-size: 15px;
+  line-height: 25px;
   font-weight: 400;
 `;
 const Status = styled.div`
@@ -114,6 +149,7 @@ export default function ProductSearchResult() {
     pageInfo: null,
     error: "",
   });
+  const [sortBy, setSortBy] = useState("latest");
   const resultsRef = useRef(null);
 
   useEffect(() => {
@@ -172,6 +208,17 @@ export default function ProductSearchResult() {
             </Category>
           ))}
         </Categories>
+        <SortPanel>
+          <SortLabel htmlFor="product-sort">정렬 기준</SortLabel>
+          <SortSelect
+            id="product-sort"
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value)}
+          >
+            <option value="latest">최신순</option>
+            <option value="ranking">랭킹순 (평점 높은 순)</option>
+          </SortSelect>
+        </SortPanel>
         <ResultPanel ref={resultsRef}>
           <Count>
             {query
