@@ -2,7 +2,7 @@ import styled from "@emotion/styled";
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 30px;
   margin-top: 12px;
   @media (max-width: 800px) {
@@ -57,10 +57,6 @@ export default function NutritionInfo({ nutrition = {} }) {
     {
       label: "당류",
       value: nutrition.sugar == null ? "정보 없음" : `${nutrition.sugar} g`,
-    },
-    {
-      label: "단백질",
-      value: nutrition.protein == null ? "정보 없음" : `${nutrition.protein} g`,
     },
     {
       label: "나트륨",

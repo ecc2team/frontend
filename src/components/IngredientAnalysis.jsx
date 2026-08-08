@@ -32,7 +32,7 @@ const Legend = styled.div`
 `;
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(${({ $columns }) => $columns}, minmax(0, 1fr));
   gap: 30px;
   margin-top: 25px;
   padding: 10px;
@@ -102,7 +102,7 @@ export default function IngredientAnalysis({
     ...(analysis.sweeteners || []).map((item) => ({ ...item, type: "대체당" })),
     ...(analysis.additives || []).map((item) => ({ ...item, type: "첨가물" })),
   ];
-  const visible = expanded ? entries : entries.slice(0, 2);
+  const visible = expanded ? entries : entries.slice(0, 3);
   return (
     <>
       <Header>
@@ -122,7 +122,7 @@ export default function IngredientAnalysis({
           </span>
         </Legend>
       </Header>
-      <Grid>
+      <Grid $columns={Math.min(Math.max(visible.length, 1), 5)}>
         {visible.map((item, index) => (
           <Card key={`${item.type}-${item.name}-${index}`}>
             <Type>
@@ -133,7 +133,7 @@ export default function IngredientAnalysis({
           </Card>
         ))}
       </Grid>
-      {entries.length > 2 && (
+      {entries.length > 3 && (
         <More type="button" onClick={onToggle} aria-expanded={expanded}>
           {expanded ? "접기" : "더보기"}
         </More>

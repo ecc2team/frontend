@@ -187,6 +187,8 @@ const Footer = styled(Panel)`
   h2 {
     margin: 0;
     font-size: 20px;
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
   .actions {
     display: flex;
@@ -198,7 +200,8 @@ const Footer = styled(Panel)`
     flex-direction: column;
   }
   .actions {
-    width: 100%;
+    width: auto;
+    margin-left: auto;
     justify-content: flex-end;
     flex-wrap: wrap;
   }
