@@ -49,6 +49,25 @@ const Card = styled.article`
   border: 1px solid #f3deff;
   border-radius: 10px;
   background: #fff;
+`;
+const Type = styled.span`
+  display: block;
+  margin-bottom: 14px;
+  color: #a032be;
+  font-size: 13px;
+  font-weight: 700;
+`;
+const IngredientList = styled.div`
+  display: grid;
+  gap: 16px;
+`;
+const Ingredient = styled.div`
+  padding-top: 14px;
+  border-top: 1px solid #f3deff;
+  &:first-of-type {
+    padding-top: 0;
+    border-top: 0;
+  }
   h3 {
     margin: 0 0 7px;
     font-size: 17px;
@@ -62,12 +81,19 @@ const Card = styled.article`
     overflow-wrap: anywhere;
   }
 `;
-const Type = styled.span`
-  display: block;
-  margin-bottom: 14px;
+const Risk = styled.span`
+  display: inline-block;
+  margin-bottom: 6px;
   color: #a032be;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
+`;
+const Empty = styled.p`
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 34px;
+  color: #5c5454;
+  text-align: center;
 `;
 const More = styled.button`
   display: block;
@@ -93,16 +119,21 @@ const riskLabel = {
   CAUTION: "주의",
   RISKY: "위험",
 };
+const groupLabel = {
+  sweeteners: "대체당",
+  additives: "첨가물",
+};
 export default function IngredientAnalysis({
   analysis = {},
   expanded,
   onToggle,
 }) {
-  const entries = [
-    ...(analysis.sweeteners || []).map((item) => ({ ...item, type: "대체당" })),
-    ...(analysis.additives || []).map((item) => ({ ...item, type: "첨가물" })),
-  ];
-  const visible = expanded ? entries : entries.slice(0, 3);
+  const groups = Object.entries(analysis).filter(
+    ([, ingredients]) => Array.isArray(ingredients) && ingredients.length > 0,
+  );
+  const hasHiddenIngredients = groups.some(
+    ([, ingredients]) => ingredients.length > 2,
+  );
   return (
     <>
       <Header>
@@ -122,18 +153,29 @@ export default function IngredientAnalysis({
           </span>
         </Legend>
       </Header>
-      <Grid $columns={Math.min(Math.max(visible.length, 1), 5)}>
-        {visible.map((item, index) => (
-          <Card key={`${item.type}-${item.name}-${index}`}>
-            <Type>
-              {item.type} · {riskLabel[item.riskLevel] || item.riskLevel}
-            </Type>
-            <h3>{item.name}</h3>
-            <p>{item.summary}</p>
-          </Card>
-        ))}
+      <Grid $columns={Math.min(Math.max(groups.length, 1), 5)}>
+        {groups.length === 0 && <Empty>성분 분석 정보가 없습니다.</Empty>}
+        {groups.map(([groupKey, ingredients]) => {
+          const visibleIngredients = expanded
+            ? ingredients
+            : ingredients.slice(0, 2);
+          return (
+            <Card key={groupKey}>
+              <Type>{groupLabel[groupKey] || groupKey}</Type>
+              <IngredientList>
+                {visibleIngredients.map((item, index) => (
+                  <Ingredient key={`${item.name}-${index}`}>
+                    <Risk>{riskLabel[item.riskLevel] || item.riskLevel}</Risk>
+                    <h3>{item.name}</h3>
+                    <p>{item.summary}</p>
+                  </Ingredient>
+                ))}
+              </IngredientList>
+            </Card>
+          );
+        })}
       </Grid>
-      {entries.length > 3 && (
+      {hasHiddenIngredients && (
         <More type="button" onClick={onToggle} aria-expanded={expanded}>
           {expanded ? "접기" : "더보기"}
         </More>
