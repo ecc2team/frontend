@@ -3,6 +3,8 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import SectionPage from "./pages/SectionPage";
+import ProductSearchResult from "./pages/ProductSearchResult";
+import ProductDetail from "./pages/ProductDetail";
 
 const routes = [
   ["/categories", "카테고리"],
@@ -28,10 +30,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route
-          path="/search"
-          element={<SectionPage title="검색 결과" showQuery />}
-        />
+        <Route path="/search" element={<ProductSearchResult />} />
+        <Route path="/products/:productId" element={<ProductDetail />} />
         {routes.map(([path, title]) => (
           <Route
             key={path}
