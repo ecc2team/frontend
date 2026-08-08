@@ -38,13 +38,10 @@ const Summary = styled(Panel)`
     gap: 28px;
   }
   .score {
-    display: block;
+    justify-self: center;
   }
   @media (max-width: 700px) {
     grid-template-columns: 1fr;
-  }
-  .score {
-    justify-self: stretch;
   }
 `;
 const ProductVisual = styled.div`
@@ -128,15 +125,23 @@ const ScoreCard = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   padding-top: 8px;
   color: #5c5454;
   font-size: 20px;
+  text-align: center;
+`;
+const ScoreLabel = styled.div`
+  width: 100%;
+  text-align: center;
 `;
 const Ring = styled.div`
   position: relative;
   width: 169px;
   height: 167px;
   margin-top: 8px;
+  margin-right: auto;
+  margin-left: auto;
   img {
     position: absolute;
     inset: 0;
@@ -155,10 +160,11 @@ const Ring = styled.div`
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0;
     color: #a032be;
     font-size: 42px;
     font-weight: 700;
-    small {
+    span {
       color: rgba(0, 0, 0, 0.75);
       font-size: 20px;
       font-weight: 500;
@@ -187,6 +193,8 @@ const Footer = styled(Panel)`
   h2 {
     margin: 0;
     font-size: 20px;
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
   .actions {
     display: flex;
@@ -198,7 +206,8 @@ const Footer = styled(Panel)`
     flex-direction: column;
   }
   .actions {
-    width: 100%;
+    width: auto;
+    margin-left: auto;
     justify-content: flex-end;
     flex-wrap: wrap;
   }
@@ -300,14 +309,14 @@ export default function ProductDetail() {
             </Tags>
           </ProductInfo>
           <ScoreCard className="score">
-            ZeroPick 점수
+            <ScoreLabel>ZeroPick 점수</ScoreLabel>
             <Ring>
               <img src={scoreBase} alt="" />
               <img src={scoreProgress} alt="" />
               <img src={scoreInner} alt="" />
               <div className="value">
                 {product.grade}
-                <small>등급</small>
+                <span>등급</span>
               </div>
             </Ring>
           </ScoreCard>

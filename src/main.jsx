@@ -4,10 +4,6 @@ import "./index.css";
 import App from "./App.jsx";
 
 async function enableMocking() {
-  if (!import.meta.env.DEV) {
-    return;
-  }
-
   const { worker } = await import("./mocks/browser.js");
 
   await worker.start({
