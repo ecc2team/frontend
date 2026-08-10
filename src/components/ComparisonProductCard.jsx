@@ -8,8 +8,14 @@ const Card = styled.article`
   height: 263px;
   border: 1px solid #8f8686;
   border-radius: 10px;
-  background: #fff;
+  background: ${({ $disabled }) => ($disabled ? "#eeeeee" : "#fff")};
   overflow: hidden;
+  opacity: ${({ $disabled }) => ($disabled ? 0.58 : 1)};
+  filter: ${({ $disabled }) => ($disabled ? "grayscale(0.75)" : "none")};
+  transition:
+    opacity 0.2s ease,
+    filter 0.2s ease,
+    background 0.2s ease;
 `;
 
 const Select = styled.input`
@@ -103,14 +109,21 @@ const Badge = styled.span`
   white-space: nowrap;
 `;
 
-function ComparisonProductCard({ product, selected, onSelect, onRemove }) {
+function ComparisonProductCard({
+  product,
+  selected,
+  disabled,
+  onSelect,
+  onRemove,
+}) {
   const badges = product.badges ?? product.tags ?? [];
 
   return (
-    <Card>
+    <Card $disabled={disabled} aria-disabled={disabled}>
       <Select
         type="checkbox"
         checked={selected}
+        disabled={disabled}
         onChange={() => onSelect(product.productId)}
         aria-label={`${product.productName} 선택`}
       />

@@ -10,6 +10,7 @@ import {
 } from "../mocks/data/comparisonProducts";
 
 const PAGE_SIZE = 8;
+const MAX_SELECTED_PRODUCTS = 3;
 
 const Page = styled.div`
   min-height: 100svh;
@@ -76,31 +77,9 @@ const CompareButton = styled.button`
   }
 `;
 
-const SelectAllLabel = styled.label`
-  width: max-content;
-  margin: 9px 0 18px 110px;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  font-size: 20px;
-  line-height: 29px;
-  cursor: ${({ $disabled }) => ($disabled ? "default" : "pointer")};
-
-  input {
-    width: 25px;
-    height: 25px;
-    margin: 0;
-    accent-color: #a032be;
-  }
-
-  @media (max-width: 700px) {
-    margin-left: 0;
-  }
-`;
-
 const Grid = styled.section`
   width: min(1218px, 100%);
-  margin: 0 auto;
+  margin: 56px auto 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 282px));
   gap: 32px 30px;
@@ -193,17 +172,18 @@ function ComparisonList() {
       products.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
     [currentPage, products],
   );
-  const allSelected =
-    products.length > 0 && selectedIds.length === products.length;
+  const selectionLimitReached = selectedIds.length >= MAX_SELECTED_PRODUCTS;
   const showAddCard =
     products.length < MAX_COMPARISON_PRODUCTS && currentPage === totalPages;
 
   const toggleProduct = (productId) => {
-    setSelectedIds((current) =>
-      current.includes(productId)
-        ? current.filter((id) => id !== productId)
-        : [...current, productId],
-    );
+    setSelectedIds((current) => {
+      if (current.includes(productId)) {
+        return current.filter((id) => id !== productId);
+      }
+      if (current.length >= MAX_SELECTED_PRODUCTS) return current;
+      return [...current, productId];
+    });
   };
 
   const removeProduct = (productId) => {
@@ -211,12 +191,6 @@ function ComparisonList() {
       current.filter((product) => product.productId !== productId),
     );
     setSelectedIds((current) => current.filter((id) => id !== productId));
-  };
-
-  const toggleAll = () => {
-    setSelectedIds(
-      allSelected ? [] : products.map(({ productId }) => productId),
-    );
   };
 
   return (
@@ -232,21 +206,16 @@ function ComparisonList() {
             선택한 상품 비교하기
           </CompareButton>
         </Summary>
-        <SelectAllLabel $disabled={products.length === 0}>
-          <input
-            type="checkbox"
-            checked={allSelected}
-            disabled={products.length === 0}
-            onChange={toggleAll}
-          />
-          전체 선택
-        </SelectAllLabel>
         <Grid aria-label="비교함 상품 목록">
           {pageProducts.map((product) => (
             <ComparisonProductCard
               key={product.productId}
               product={product}
               selected={selectedIds.includes(product.productId)}
+              disabled={
+                selectionLimitReached &&
+                !selectedIds.includes(product.productId)
+              }
               onSelect={toggleProduct}
               onRemove={removeProduct}
             />
