@@ -5,6 +5,7 @@ import Signup from "./pages/Signup";
 import SectionPage from "./pages/SectionPage";
 import ProductSearchResult from "./pages/ProductSearchResult";
 import ProductDetail from "./pages/ProductDetail";
+import ComparisonList from "./pages/ComparisonList";
 
 const routes = [
   ["/categories", "카테고리"],
@@ -32,13 +33,16 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/search" element={<ProductSearchResult />} />
         <Route path="/products/:productId" element={<ProductDetail />} />
-        {routes.map(([path, title]) => (
-          <Route
-            key={path}
-            path={path}
-            element={<SectionPage title={title} />}
-          />
-        ))}
+        <Route path="/compare" element={<ComparisonList />} />
+        {routes
+          .filter(([path]) => path !== "/compare")
+          .map(([path, title]) => (
+            <Route
+              key={path}
+              path={path}
+              element={<SectionPage title={title} />}
+            />
+          ))}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

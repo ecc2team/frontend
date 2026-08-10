@@ -1,5 +1,10 @@
 import { http, HttpResponse } from "msw";
 import { products } from "./data/products.js";
+import { profile } from "./data/profile.js";
+import {
+  comparisonProducts,
+  MAX_COMPARISON_PRODUCTS,
+} from "./data/comparisonProducts.js";
 
 const createSearchResult = (product) => ({
   productId: product.productId,
@@ -89,6 +94,32 @@ export const handlers = [
       status: 200,
       message: "제품 상세 및 성분 분석 결과 조회가 완료되었습니다.",
       data: createProductDetail(product),
+    });
+  }),
+
+  // 프로필 조회 Mock
+  http.get("/api/profile", () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "프로필 조회가 성공적으로 완료되었습니다.",
+      data: profile,
+    });
+  }),
+
+  // 비교함 목록 조회 Mock
+  http.get("/api/comparisons", () => {
+    const visibleProducts = comparisonProducts.slice(
+      0,
+      MAX_COMPARISON_PRODUCTS,
+    );
+
+    return HttpResponse.json({
+      status: 200,
+      message: "내 비교함 목록 조회가 완료되었습니다.",
+      data: {
+        savedCount: visibleProducts.length,
+        products: visibleProducts,
+      },
     });
   }),
 ];
