@@ -4,6 +4,11 @@ import "./index.css";
 import App from "./App.jsx";
 
 async function enableMocking() {
+  // 로컬 개발 환경에서만 MSW 실행
+  if (!import.meta.env.DEV) {
+    return;
+  }
+
   const { worker } = await import("./mocks/browser.js");
 
   await worker.start({

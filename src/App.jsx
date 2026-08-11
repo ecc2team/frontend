@@ -6,6 +6,7 @@ import SectionPage from "./pages/SectionPage";
 import ProductSearchResult from "./pages/ProductSearchResult";
 import ProductDetail from "./pages/ProductDetail";
 import ComparisonList from "./pages/ComparisonList";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const routes = [
   ["/categories", "카테고리"],
@@ -33,9 +34,16 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/search" element={<ProductSearchResult />} />
         <Route path="/products/:productId" element={<ProductDetail />} />
-        <Route path="/compare" element={<ComparisonList />} />
+        <Route
+          path="/compare"
+          element={
+            <ProtectedRoute>
+              <ComparisonList />
+            </ProtectedRoute>
+          }
+        />
         {routes
-          .filter(([path]) => path !== "/compare")
+          .filter(([path]) => path !== "/compare" && path !== "/records")
           .map(([path, title]) => (
             <Route
               key={path}
@@ -43,6 +51,14 @@ function App() {
               element={<SectionPage title={title} />}
             />
           ))}
+        <Route
+          path="/records"
+          element={
+            <ProtectedRoute>
+              <SectionPage title="기록" />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

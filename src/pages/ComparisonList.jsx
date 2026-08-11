@@ -1,16 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styled from "@emotion/styled";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import ComparisonProductCard from "../components/ComparisonProductCard";
 import addCircle from "../assets/compare-add.svg";
-import {
-  comparisonProducts,
-  MAX_COMPARISON_PRODUCTS,
-} from "../mocks/data/comparisonProducts";
+import { getComparisonList } from "../api/comparison-list";
 
 const PAGE_SIZE = 8;
 const MAX_SELECTED_PRODUCTS = 3;
+const MAX_COMPARISON_PRODUCTS = 50;
 
 const Page = styled.div`
   min-height: 100svh;
@@ -160,19 +158,63 @@ const PageButton = styled.button`
 `;
 
 function ComparisonList() {
-  const [products, setProducts] = useState(() =>
-    comparisonProducts.slice(0, MAX_COMPARISON_PRODUCTS),
-  );
+  const [products, setProducts] = useState([]);
+  const [savedCount, setSavedCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState([]);
   const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+
+    async function loadComparisonList() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getComparisonList({
+          signal: controller.signal,
+        });
+
+        if (!active) return;
+
+        setProducts(data.products.slice(0, MAX_COMPARISON_PRODUCTS));
+        setSavedCount(data.savedCount);
+      } catch (error) {
+        if (!active || error.name === "AbortError") return;
+
+        setProducts([]);
+        setSavedCount(0);
+        setError(error.message);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadComparisonList();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, []);
+
   const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+
   const currentPage = Math.min(page, totalPages);
+
   const pageProducts = useMemo(
     () =>
       products.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
     [currentPage, products],
   );
+
   const selectionLimitReached = selectedIds.length >= MAX_SELECTED_PRODUCTS;
+
   const showAddCard =
     products.length < MAX_COMPARISON_PRODUCTS && currentPage === totalPages;
 
@@ -181,7 +223,11 @@ function ComparisonList() {
       if (current.includes(productId)) {
         return current.filter((id) => id !== productId);
       }
-      if (current.length >= MAX_SELECTED_PRODUCTS) return current;
+
+      if (current.length >= MAX_SELECTED_PRODUCTS) {
+        return current;
+      }
+
       return [...current, productId];
     });
   };
@@ -190,59 +236,79 @@ function ComparisonList() {
     setProducts((current) =>
       current.filter((product) => product.productId !== productId),
     );
+
+    setSavedCount((current) => Math.max(0, current - 1));
+
     setSelectedIds((current) => current.filter((id) => id !== productId));
   };
 
   return (
     <Page>
       <Header />
+
       <Main>
         <Title>내 비교함</Title>
+
         <Summary>
           <Count>
-            비교함에 담은 상품 <strong>{products.length}개</strong>
+            비교함에 담은 상품 <strong>{savedCount}개</strong>
           </Count>
+
           <CompareButton type="button" disabled={selectedIds.length < 2}>
             선택한 상품 비교하기
           </CompareButton>
         </Summary>
-        <Grid aria-label="비교함 상품 목록">
-          {pageProducts.map((product) => (
-            <ComparisonProductCard
-              key={product.productId}
-              product={product}
-              selected={selectedIds.includes(product.productId)}
-              disabled={
-                selectionLimitReached &&
-                !selectedIds.includes(product.productId)
-              }
-              onSelect={toggleProduct}
-              onRemove={removeProduct}
-            />
-          ))}
-          {showAddCard && (
-            <AddCard to="/search">
-              <img src={addCircle} alt="" />
-              <span>상품 추가하기</span>
-            </AddCard>
-          )}
-        </Grid>
-        {totalPages > 1 && (
-          <Pagination aria-label="비교함 페이지 이동">
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-              (pageNumber) => (
-                <PageButton
-                  key={pageNumber}
-                  type="button"
-                  $active={pageNumber === currentPage}
-                  onClick={() => setPage(pageNumber)}
-                  aria-current={pageNumber === currentPage ? "page" : undefined}
-                >
-                  {pageNumber}
-                </PageButton>
-              ),
+
+        {loading && <div>비교함을 불러오고 있습니다...</div>}
+
+        {!loading && error && <div>{error}</div>}
+
+        {!loading && !error && (
+          <>
+            <Grid aria-label="비교함 상품 목록">
+              {pageProducts.map((product) => (
+                <ComparisonProductCard
+                  key={product.productId}
+                  product={product}
+                  selected={selectedIds.includes(product.productId)}
+                  disabled={
+                    selectionLimitReached &&
+                    !selectedIds.includes(product.productId)
+                  }
+                  onSelect={toggleProduct}
+                  onRemove={removeProduct}
+                />
+              ))}
+
+              {showAddCard && (
+                <AddCard to="/search">
+                  <img src={addCircle} alt="" />
+                  <span>상품 추가하기</span>
+                </AddCard>
+              )}
+            </Grid>
+
+            {totalPages > 1 && (
+              <Pagination aria-label="비교함 페이지 이동">
+                {Array.from(
+                  { length: totalPages },
+                  (_, index) => index + 1,
+                ).map((pageNumber) => (
+                  <PageButton
+                    key={pageNumber}
+                    type="button"
+                    $active={pageNumber === currentPage}
+                    onClick={() => setPage(pageNumber)}
+                    aria-current={
+                      pageNumber === currentPage ? "page" : undefined
+                    }
+                  >
+                    {pageNumber}
+                  </PageButton>
+                ))}
+              </Pagination>
             )}
-          </Pagination>
+          </>
         )}
       </Main>
     </Page>
