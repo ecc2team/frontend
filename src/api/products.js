@@ -8,7 +8,7 @@ export async function searchProducts({ query, page = 0, size = 20, signal }) {
   });
 
   const response = await fetch(
-    `${API_BASE_URL}/api/products/search?${params.toString()}`,
+    `${API_BASE_URL}/api/v1/products/search?${params.toString()}`,
     {
       signal,
     },
@@ -33,7 +33,7 @@ export async function searchProducts({ query, page = 0, size = 20, signal }) {
 
 export async function getProductDetail(productId, { signal } = {}) {
   const response = await fetch(
-    `${API_BASE_URL}/api/products/${encodeURIComponent(productId)}`,
+    `${API_BASE_URL}/api/v1/products/${encodeURIComponent(productId)}`,
     {
       signal,
     },
