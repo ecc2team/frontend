@@ -122,4 +122,17 @@ export const handlers = [
       },
     });
   }),
+
+  http.get("/api/v1/comparison-box", () => {
+    const products = comparisonProducts.slice(0, MAX_COMPARISON_PRODUCTS);
+
+    return HttpResponse.json({
+      status: 200,
+      message: "내 비교함 목록 조회가 완료되었습니다.",
+      data: {
+        savedCount: products.length,
+        products,
+      },
+    });
+  }),
 ];
