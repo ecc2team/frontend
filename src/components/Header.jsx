@@ -203,7 +203,9 @@ const Actions = styled.div`
   }
 `;
 
-const Action = styled(Link)`
+const Action = styled(Link, {
+  shouldForwardProp: (prop) => prop !== "$primary",
+})`
   height: 64px;
   padding: 0 34px;
   border: 1px solid #df6bff;

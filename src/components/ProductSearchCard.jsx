@@ -86,6 +86,16 @@ const Warning = styled.p`
   font-size: 11px;
   font-weight: 700;
 `;
+const Allergy = styled.p`
+  margin: 5px 0 0;
+  padding: 6px;
+  border-radius: 6px;
+  background: ${({ $hasAllergy }) => ($hasAllergy ? "#fff6e7" : "#eff9f1")};
+  color: ${({ $hasAllergy }) => ($hasAllergy ? "#a15c00" : "#287a3d")};
+  font-size: 11px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+`;
 
 export default function ProductSearchCard({ product }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -122,6 +132,11 @@ export default function ProductSearchCard({ product }) {
       <Warning $warning={product.warningAdditive}>
         {product.warningAdditive ? "주의 첨가물이 있어요" : "주의 첨가물 없음"}
       </Warning>
+      <Allergy $hasAllergy={product.allergicIngredients?.length > 0}>
+        {product.allergicIngredients?.length > 0
+          ? `알레르기 유발 성분: ${product.allergicIngredients.join(", ")}`
+          : "알레르기 유발 성분 없음"}
+      </Allergy>
     </Card>
   );
 }
