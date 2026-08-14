@@ -104,7 +104,7 @@ export default function ProductSearchCard({ product }) {
   const weight = product.weight || "함량 정보 없음";
   return (
     <Card
-      to={`/products/${product.productId}`}
+      to={`/products/${encodeURIComponent(product.productId)}`}
       aria-label={`${product.productName} 상세 보기`}
     >
       <ImageBox>

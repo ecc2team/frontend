@@ -122,6 +122,8 @@ const riskLabel = {
 const groupLabel = {
   sweeteners: "대체당",
   additives: "첨가물",
+  cautionIngredients: "주의 성분",
+  allergicIngredients: "알레르기 유발 성분",
 };
 export default function IngredientAnalysis({
   analysis = {},

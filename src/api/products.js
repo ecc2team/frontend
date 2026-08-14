@@ -29,6 +29,52 @@ const normalizeSearchProduct = (product) => ({
     .filter(Boolean),
 });
 
+const normalizeAnalysisItem = (ingredient) => {
+  if (typeof ingredient === "string") {
+    return { name: ingredient, riskLevel: "GENERAL", summary: "" };
+  }
+
+  return {
+    ...ingredient,
+    name:
+      ingredient?.name ||
+      ingredient?.ingredientName ||
+      ingredient?.code ||
+      "성분 정보 없음",
+    riskLevel: ingredient?.riskLevel || ingredient?.risk || "GENERAL",
+    summary: ingredient?.summary || ingredient?.description || "",
+  };
+};
+
+const normalizeAnalysis = (analysis = {}) =>
+  Object.fromEntries(
+    Object.entries(analysis)
+      .filter(([, ingredients]) => Array.isArray(ingredients))
+      .map(([group, ingredients]) => [
+        group,
+        ingredients.map(normalizeAnalysisItem),
+      ]),
+  );
+
+const normalizeProductDetail = (product) => {
+  const rawAnalysis = product.ingredientsAnalysis ?? product.analysis ?? {};
+  const cautionIngredients = rawAnalysis.cautionIngredients ?? [];
+
+  return {
+    ...product,
+    productId: product.productId ?? product.id,
+    productName: product.productName ?? product.name,
+    imageUrl: product.imageUrl ?? product.image ?? null,
+    grade: product.grade ?? 0,
+    warningAdditive: Boolean(product.warningAdditive),
+    nutrition: product.nutrition ?? {},
+    keyIngredients: (product.keyIngredients ?? cautionIngredients)
+      .map(normalizeIngredientName)
+      .filter(Boolean),
+    ingredientsAnalysis: normalizeAnalysis(rawAnalysis),
+  };
+};
+
 export async function searchProducts({ query, page = 0, size = 20, signal }) {
   const params = new URLSearchParams({ query });
   const response = await fetch(
@@ -81,13 +127,15 @@ export async function getProductDetail(productId, { signal } = {}) {
     throw new Error(result.message || "상품 정보를 불러오지 못했습니다.");
   }
 
-  if (
-    !result?.data ||
-    result.data.productId == null ||
-    !result.data.productName
-  ) {
+  if (!result?.data) {
     throw new Error("상품 상세 응답 형식이 올바르지 않습니다.");
   }
 
-  return result.data;
+  const product = normalizeProductDetail(result.data);
+
+  if (product.productId == null || !product.productName) {
+    throw new Error("상품 상세 응답 형식이 올바르지 않습니다.");
+  }
+
+  return product;
 }
