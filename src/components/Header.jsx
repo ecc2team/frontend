@@ -12,6 +12,15 @@ const navItems = [
   ["기록", "/records"],
 ];
 
+const categoryItems = [
+  ["음료수", "/categories/drinks"],
+  ["단백질 바", "/categories/protein-bars"],
+  ["간식류", "/categories/snacks"],
+  ["냉동식품", "/categories/frozen-food"],
+  ["소스류", "/categories/sauces"],
+  ["기타", "/categories/other"],
+];
+
 const Shell = styled.header`
   position: relative;
   z-index: 10;
@@ -111,6 +120,74 @@ const Nav = styled.nav`
   }
 `;
 
+const CategoryMenu = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  &:hover > div,
+  &:focus-within > div {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+  }
+`;
+
+const CategoryDropdown = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 190px;
+  padding-top: 16px;
+  visibility: hidden;
+  opacity: 0;
+  transform: translate(-50%, -8px);
+  pointer-events: none;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    visibility 0.16s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    border-top: 1px solid #f3deff;
+    border-left: 1px solid #f3deff;
+    background: #fff;
+    transform: translateX(-50%) rotate(45deg);
+  }
+`;
+
+const CategoryDropdownPanel = styled.div`
+  padding: 8px 0;
+  border: 1px solid #f3deff;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(82 48 91 / 14%);
+  overflow: hidden;
+
+  a {
+    display: block;
+    padding: 11px 20px;
+    color: #332d33;
+    font-size: 18px;
+    line-height: 24px;
+    text-align: left;
+
+    &:hover,
+    &:focus-visible {
+      background: #f3deff;
+      color: #8b25a8;
+      outline: none;
+    }
+  }
+`;
+
 const Actions = styled.div`
   display: flex;
   gap: 30px;
@@ -172,11 +249,26 @@ function Header() {
           <img src={logoWordmark} alt="ZeroPick" />
         </Brand>
         <Nav aria-label="주요 메뉴">
-          {navItems.map(([label, path]) => (
-            <Link to={path} key={path}>
-              {label}
-            </Link>
-          ))}
+          {navItems.map(([label, path]) =>
+            path === "/categories" ? (
+              <CategoryMenu key={path}>
+                <Link to={path}>{label}</Link>
+                <CategoryDropdown>
+                  <CategoryDropdownPanel>
+                    {categoryItems.map(([categoryLabel, categoryPath]) => (
+                      <Link to={categoryPath} key={categoryPath}>
+                        {categoryLabel}
+                      </Link>
+                    ))}
+                  </CategoryDropdownPanel>
+                </CategoryDropdown>
+              </CategoryMenu>
+            ) : (
+              <Link to={path} key={path}>
+                {label}
+              </Link>
+            ),
+          )}
         </Nav>
         <Actions>
           <Action to="/login">로그인</Action>
