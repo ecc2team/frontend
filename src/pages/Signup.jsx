@@ -47,7 +47,8 @@ const Info = styled.div`
 `;
 const Field = styled.div`
   display: grid;
-  grid-template-columns: 155px minmax(0, 602px) 145px;
+  grid-template-columns: ${({ $email }) =>
+    $email ? "155px minmax(0, 534px) 318px" : "155px minmax(0, 602px) 145px"};
   align-items: center;
   gap: 27px;
   @media (max-width: 760px) {
@@ -78,12 +79,13 @@ const VerifyArea = styled.div`
   gap: 12px;
 `;
 const Verify = styled.button`
+  width: 118px;
   height: 45px;
-  padding: 0 15px;
-  border: 0;
+  padding: 0;
+  border: 1px solid #a032be;
   border-radius: 10px;
-  background: #a032be;
-  color: #fff;
+  background: ${({ $secondary }) => ($secondary ? "#fff" : "#a032be")};
+  color: ${({ $secondary }) => ($secondary ? "#a032be" : "#fff")};
   font-size: 20px;
   white-space: nowrap;
   cursor: pointer;
@@ -228,7 +230,7 @@ export default function Signup() {
           <SectionTitle>기본 정보</SectionTitle>
           <Info>
             {fields.map(({ key, label, type, placeholder }) => (
-              <Field key={key}>
+              <Field key={key} $email={key === "email"}>
                 <FieldLabel htmlFor={key}>{label}</FieldLabel>
                 <Input
                   id={key}
@@ -242,6 +244,11 @@ export default function Signup() {
                   <Verify type="button" onClick={() => verify(key)}>
                     중복 확인
                   </Verify>
+                  {key === "email" && (
+                    <Verify type="button" $secondary>
+                      인증
+                    </Verify>
+                  )}
                   {verified[key] && (
                     <Check>
                       <img src={checkIcon} alt="사용 가능" />
