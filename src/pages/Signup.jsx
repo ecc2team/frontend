@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import styled from "@emotion/styled";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
@@ -47,8 +47,7 @@ const Info = styled.div`
 `;
 const Field = styled.div`
   display: grid;
-  grid-template-columns: ${({ $email }) =>
-    $email ? "155px minmax(0, 534px) 318px" : "155px minmax(0, 602px) 145px"};
+  grid-template-columns: 155px minmax(0, 602px) 145px;
   align-items: center;
   gap: 27px;
   @media (max-width: 760px) {
@@ -100,6 +99,76 @@ const Check = styled.span`
     width: 36px;
     height: 26px;
   }
+`;
+const VerificationCodeRow = styled.div`
+  width: 602px;
+  height: 40px;
+  margin-left: 182px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  @media (max-width: 760px) {
+    width: 100%;
+    height: auto;
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+`;
+const VerificationCodeLabel = styled.label`
+  flex: 0 0 64px;
+  padding-top: 9px;
+  font-size: 18px;
+  white-space: nowrap;
+`;
+const VerificationInput = styled(Input)`
+  flex: 0 0 299px;
+  width: 299px;
+  height: 40px;
+
+  @media (max-width: 760px) {
+    flex: 1 1 220px;
+    width: auto;
+  }
+`;
+const VerificationActions = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-left: 3px;
+
+  @media (max-width: 760px) {
+    margin-left: 72px;
+  }
+`;
+const ResendArea = styled.div`
+  position: relative;
+  width: 100px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+`;
+const VerificationButton = styled(Verify)`
+  width: 100px;
+  height: 40px;
+  font-size: 18px;
+`;
+const ResendButton = styled(VerificationButton)`
+  background: ${({ disabled }) => (disabled ? "#a9a4aa" : "#a032be")};
+  border-color: ${({ disabled }) => (disabled ? "#a9a4aa" : "#a032be")};
+  color: #fff;
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+`;
+const Countdown = styled.span`
+  position: absolute;
+  top: 43px;
+  left: 0;
+  width: 100%;
+  color: #248a3d;
+  font-size: 10px;
+  line-height: 12px;
 `;
 const Preferences = styled.div`
   display: grid;
@@ -167,6 +236,24 @@ export default function Signup() {
   const [selections, setSelections] = useState(initialSelections);
   const [message, setMessage] = useState({ text: "", error: false });
   const [loading, setLoading] = useState(false);
+  const [emailCode, setEmailCode] = useState("");
+  const [emailCodeVerified] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return undefined;
+
+    const timer = window.setInterval(() => {
+      setResendSeconds((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [resendSeconds]);
+
+  const resendVerificationCode = () => {
+    if (resendSeconds > 0) return;
+    setResendSeconds(60);
+  };
   const changeValue = (field, value) => {
     setValues((prev) => ({ ...prev, [field]: value }));
     setVerified((prev) => ({ ...prev, [field]: false }));
@@ -230,32 +317,69 @@ export default function Signup() {
           <SectionTitle>기본 정보</SectionTitle>
           <Info>
             {fields.map(({ key, label, type, placeholder }) => (
-              <Field key={key} $email={key === "email"}>
-                <FieldLabel htmlFor={key}>{label}</FieldLabel>
-                <Input
-                  id={key}
-                  type={type}
-                  value={values[key]}
-                  onChange={(event) => changeValue(key, event.target.value)}
-                  placeholder={placeholder}
-                  required
-                />
-                <VerifyArea>
-                  <Verify type="button" onClick={() => verify(key)}>
-                    중복 확인
-                  </Verify>
-                  {key === "email" && (
-                    <Verify type="button" $secondary>
-                      인증
+              <Fragment key={key}>
+                <Field>
+                  <FieldLabel htmlFor={key}>{label}</FieldLabel>
+                  <Input
+                    id={key}
+                    type={type}
+                    value={values[key]}
+                    onChange={(event) => changeValue(key, event.target.value)}
+                    placeholder={placeholder}
+                    required
+                  />
+                  <VerifyArea>
+                    <Verify type="button" onClick={() => verify(key)}>
+                      중복 확인
                     </Verify>
-                  )}
-                  {verified[key] && (
-                    <Check>
-                      <img src={checkIcon} alt="사용 가능" />
-                    </Check>
-                  )}
-                </VerifyArea>
-              </Field>
+                    {verified[key] && (
+                      <Check>
+                        <img src={checkIcon} alt="사용 가능" />
+                      </Check>
+                    )}
+                  </VerifyArea>
+                </Field>
+                {key === "email" && (
+                  <VerificationCodeRow>
+                    <VerificationCodeLabel htmlFor="email-verification-code">
+                      인증 번호
+                    </VerificationCodeLabel>
+                    <VerificationInput
+                      id="email-verification-code"
+                      type="text"
+                      inputMode="numeric"
+                      value={emailCode}
+                      onChange={(event) => setEmailCode(event.target.value)}
+                      placeholder="인증 번호를 입력해주세요"
+                      autoComplete="one-time-code"
+                    />
+                    <VerificationActions>
+                      <ResendArea>
+                        <ResendButton
+                          type="button"
+                          disabled={resendSeconds > 0}
+                          onClick={resendVerificationCode}
+                        >
+                          재전송
+                        </ResendButton>
+                        <Countdown aria-live="polite">
+                          {resendSeconds > 0
+                            ? `00:${String(resendSeconds).padStart(2, "0")}`
+                            : ""}
+                        </Countdown>
+                      </ResendArea>
+                      <VerificationButton type="button" $secondary>
+                        인증
+                      </VerificationButton>
+                      {emailCodeVerified && (
+                        <Check>
+                          <img src={checkIcon} alt="이메일 인증 완료" />
+                        </Check>
+                      )}
+                    </VerificationActions>
+                  </VerificationCodeRow>
+                )}
+              </Fragment>
             ))}
           </Info>
           <Divider />
