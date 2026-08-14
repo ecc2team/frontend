@@ -1,8 +1,9 @@
 import { Fragment, useEffect, useState } from "react";
 import styled from "@emotion/styled";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import PreferenceRow from "../components/PreferenceRow";
+import SocialLoginButton from "../components/SocialLoginButton";
 import { signupOptions } from "../data/signupOptions";
 import { checkDuplicate, signup } from "../services/signupApi";
 import checkIcon from "../assets/signup-check.svg";
@@ -196,6 +197,22 @@ const Message = styled.p`
   text-align: center;
   color: ${({ $error }) => ($error ? "#c62828" : "#248a3d")};
 `;
+const SocialDivider = styled.div`
+  width: 78%;
+  height: 1px;
+  margin: 36px auto 22px;
+  background: #242024;
+`;
+const SocialGuide = styled.p`
+  margin: 0 0 18px;
+  color: #5c5454;
+  text-align: center;
+`;
+const SocialButtons = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+`;
 
 const initialSelections = Object.fromEntries(
   signupOptions.map(({ key }) => [key, []]),
@@ -208,21 +225,27 @@ const fields = [
     placeholder: "이메일을 입력해주세요",
   },
   {
-    key: "password",
-    label: "비밀번호",
-    type: "password",
-    placeholder: "비밀번호를 입력해주세요",
-  },
-  {
     key: "nickname",
     label: "닉네임",
     type: "text",
     placeholder: "닉네임을 입력해주세요",
   },
+  {
+    key: "password",
+    label: "비밀번호",
+    type: "password",
+    placeholder: "비밀번호를 입력해주세요",
+  },
 ];
 
 export default function Signup() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const socialProvider = searchParams.get("social");
+  const isSocialSignup = ["kakao", "google"].includes(socialProvider);
+  const visibleFields = isSocialSignup
+    ? fields.filter(({ key }) => key !== "email")
+    : fields;
   const [values, setValues] = useState({
     email: "",
     password: "",
@@ -279,7 +302,7 @@ export default function Signup() {
     }));
   const submit = async (event) => {
     event.preventDefault();
-    if (!Object.values(verified).every(Boolean)) {
+    if (!visibleFields.every(({ key }) => verified[key])) {
       setMessage({
         text: "기본 정보의 중복 확인을 모두 완료해주세요.",
         error: true,
@@ -316,7 +339,7 @@ export default function Signup() {
           <Divider />
           <SectionTitle>기본 정보</SectionTitle>
           <Info>
-            {fields.map(({ key, label, type, placeholder }) => (
+            {visibleFields.map(({ key, label, type, placeholder }) => (
               <Fragment key={key}>
                 <Field>
                   <FieldLabel htmlFor={key}>{label}</FieldLabel>
@@ -401,6 +424,24 @@ export default function Signup() {
             <Message role="status" $error={message.error}>
               {message.text}
             </Message>
+          )}
+          {!isSocialSignup && (
+            <>
+              <SocialDivider />
+              <SocialGuide>소셜 계정으로 회원가입</SocialGuide>
+              <SocialButtons>
+                <SocialLoginButton
+                  provider="kakao"
+                  to="/signup?social=kakao"
+                  label="카카오톡으로 회원가입"
+                />
+                <SocialLoginButton
+                  provider="google"
+                  to="/signup?social=google"
+                  label="Google로 회원가입"
+                />
+              </SocialButtons>
+            </>
           )}
         </Card>
       </Main>
