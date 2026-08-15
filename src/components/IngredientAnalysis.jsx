@@ -63,6 +63,27 @@ const IngredientList = styled.div`
   display: grid;
   gap: 16px;
 `;
+const IngredientName = styled.div`
+  margin: 0 0 7px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  h3 {
+    margin: 0;
+  }
+`;
+const RiskDot = styled.span`
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: ${({ $tone }) => {
+    if ($tone === "risky") return "#d93636";
+    if ($tone === "caution") return "#d98b16";
+    return "#2ca35c";
+  }};
+  flex: 0 0 11px;
+`;
 const Ingredient = styled.button`
   width: 100%;
   padding-top: 14px;
@@ -79,7 +100,6 @@ const Ingredient = styled.button`
     border-top: 0;
   }
   h3 {
-    margin: 0 0 7px;
     font-size: 17px;
     overflow-wrap: anywhere;
   }
@@ -144,6 +164,11 @@ const groupLabel = {
   cautionIngredients: "주의 성분",
   allergicIngredients: "알레르기 유발 성분",
 };
+const riskTone = (riskLevel) => {
+  if (riskLevel === "RISKY") return "risky";
+  if (riskLevel === "WARNING" || riskLevel === "CAUTION") return "caution";
+  return "safe";
+};
 export default function IngredientAnalysis({
   analysis = {},
   expanded,
@@ -194,7 +219,13 @@ export default function IngredientAnalysis({
                     aria-label={`${item.name} 상세 정보 보기`}
                   >
                     <Risk>{riskLabel[item.riskLevel] || item.riskLevel}</Risk>
-                    <h3>{item.name}</h3>
+                    <IngredientName>
+                      <RiskDot
+                        $tone={riskTone(item.riskLevel)}
+                        aria-hidden="true"
+                      />
+                      <h3>{item.name}</h3>
+                    </IngredientName>
                     <p>{item.summary}</p>
                   </Ingredient>
                 ))}
