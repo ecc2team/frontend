@@ -15,23 +15,37 @@ const Label = styled.span`
   white-space: nowrap;
 `;
 const Options = styled.div`
-  display: grid;
-  grid-template-columns: repeat(${({ $count }) => $count}, minmax(0, 1fr));
+  display: flex;
   gap: 20px;
   width: 100%;
+  padding: 3px 2px 9px;
+  overflow-x: ${({ $scrollable }) => ($scrollable ? "auto" : "visible")};
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #d9b7e4 transparent;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: #d9b7e4;
+  }
+
   @media (max-width: 760px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+    overflow-x: auto;
   }
 `;
 const Option = styled.button`
-  min-width: 0;
+  flex: 0 0 auto;
   height: 41px;
-  padding: 0 16px;
+  padding: 0 20px;
   border: 1px solid #f3deff;
   border-radius: 10px;
-  background: ${({ $selected }) => ($selected ? "#f3deff" : "#fff")};
-  color: ${({ $selected }) => ($selected ? "#a032be" : "#5c5454")};
+  background: ${({ $selected }) => ($selected ? "#a032be" : "#fff")};
+  color: ${({ $selected }) => ($selected ? "#fff" : "#5c5454")};
   font-size: 20px;
   cursor: pointer;
   white-space: nowrap;
@@ -45,7 +59,7 @@ export default function PreferenceRow({ group, selected, onToggle }) {
   return (
     <Row>
       <Label>{group.label}</Label>
-      <Options $count={group.options.length}>
+      <Options $scrollable={group.options.length >= 4}>
         {group.options.map((option) => (
           <Option
             key={option.value}

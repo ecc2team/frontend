@@ -4,7 +4,8 @@ import "./index.css";
 import App from "./App.jsx";
 
 async function enableMocking() {
-  if (!import.meta.env.DEV) {
+  // 로컬 개발 환경에서만 MSW 실행
+  if (!import.meta.env.DEV || import.meta.env.VITE_ENABLE_MSW !== "true") {
     return;
   }
 
