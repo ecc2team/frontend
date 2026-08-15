@@ -2,6 +2,7 @@ import styled from "@emotion/styled";
 import { Link, useNavigate } from "react-router-dom";
 import logoMark from "../assets/zeropick-mark.png";
 import logoWordmark from "../assets/zeropick-wordmark.png";
+import defaultProfile from "../assets/default-profile.png";
 
 const navItems = [
   ["카테고리", "/categories"],
@@ -234,6 +235,27 @@ const LogoutButton = styled.button`
   ${actionStyles}
 `;
 
+const ProfileLink = styled(Link)`
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: 0 0 70px;
+  display: block;
+
+  img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #df69ff;
+    outline-offset: 3px;
+  }
+`;
+
 const MobileMenu = styled.button`
   display: none;
   margin-left: auto;
@@ -290,7 +312,9 @@ function Header() {
         <Actions>
           {isLoggedIn ? (
             <>
-              <Action to="/profile">마이 페이지</Action>
+              <ProfileLink to="/profile" aria-label="마이 페이지">
+                <img src={defaultProfile} alt="" />
+              </ProfileLink>
               <LogoutButton type="button" $primary onClick={logout}>
                 로그아웃
               </LogoutButton>

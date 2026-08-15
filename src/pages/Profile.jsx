@@ -3,7 +3,7 @@ import styled from "@emotion/styled";
 import Header from "../components/Header";
 import { getProfile } from "../api/profile";
 import { signupOptions } from "../data/signupOptions";
-import profileImage from "../assets/zeropick-mark.png";
+import profileImage from "../assets/default-profile.png";
 
 const Page = styled.div`
   min-height: 100svh;
