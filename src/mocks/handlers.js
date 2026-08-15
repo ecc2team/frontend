@@ -1,11 +1,15 @@
 import { http, HttpResponse } from "msw";
-import { apiUrl } from "../api/client.js";
 import { products } from "./data/products.js";
 import { profile } from "./data/profile.js";
 import {
   comparisonProducts,
   MAX_COMPARISON_PRODUCTS,
 } from "./data/comparisonProducts.js";
+import { mockUser, mockTokens } from "./data/mockUser.js";
+
+// TODO: Swagger의 실제 endpoint로 변경
+const SIGNUP_PATH = "/실제-회원가입-endpoint";
+const LOGIN_PATH = "/api/v1/auth/login";
 
 const createSearchResult = (product) => ({
   productId: product.productId,
@@ -35,7 +39,7 @@ const createProductDetail = (product) => ({
 
 export const handlers = [
   // 제품 검색
-  http.get(apiUrl("products/search"), ({ request }) => {
+  http.get("/api/v1/products/search", ({ request }) => {
     const url = new URL(request.url);
 
     const query = (url.searchParams.get("query") ?? "").trim().toLowerCase();
@@ -73,7 +77,7 @@ export const handlers = [
   }),
 
   // 제품 상세 조회
-  http.get(apiUrl("products/:productId"), ({ params }) => {
+  http.get("/api/v1/products/:productId", ({ params }) => {
     const productId = Number(params.productId);
 
     const product = products.find((item) => item.productId === productId);
@@ -99,7 +103,7 @@ export const handlers = [
   }),
 
   // 프로필 조회 Mock
-  http.get(apiUrl("profile"), () => {
+  http.get("/api/v1/profile", () => {
     return HttpResponse.json({
       status: 200,
       message: "프로필 조회가 성공적으로 완료되었습니다.",
@@ -108,7 +112,7 @@ export const handlers = [
   }),
 
   // 비교함 목록 조회 Mock
-  http.get(apiUrl("comparison-box"), () => {
+  http.get("/api/v1/comparison-box", () => {
     const products = comparisonProducts.slice(0, MAX_COMPARISON_PRODUCTS);
 
     return HttpResponse.json({
@@ -117,6 +121,72 @@ export const handlers = [
       data: {
         savedCount: products.length,
         products,
+      },
+    });
+  }),
+
+  // 회원가입 Mock
+  http.post(SIGNUP_PATH, async ({ request }) => {
+    const body = await request.json();
+
+    const { email, password, nickname, onboarding } = body;
+
+    if (!email || !password || !nickname) {
+      return HttpResponse.json(
+        {
+          status: 400,
+          message: "필수 회원가입 정보가 누락되었습니다.",
+          data: null,
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        status: 201,
+        message: "회원가입이 성공적으로 완료되었습니다.",
+        data: {
+          userId: mockUser.userId,
+          email,
+          nickname,
+          onboarding,
+        },
+      },
+      {
+        status: 201,
+      },
+    );
+  }),
+
+  // 로그인 Mock
+  http.post(LOGIN_PATH, async ({ request }) => {
+    const body = await request.json();
+
+    const { email, password } = body;
+
+    if (email !== mockUser.email || password !== mockUser.password) {
+      return HttpResponse.json(
+        {
+          status: 401,
+          message: "이메일 또는 비밀번호가 올바르지 않습니다.",
+          data: null,
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
+    return HttpResponse.json({
+      status: 200,
+      message: "로그인이 성공적으로 완료되었습니다.",
+      data: {
+        userId: mockUser.userId,
+        accessToken: mockTokens.accessToken,
+        refreshToken: mockTokens.refreshToken,
       },
     });
   }),

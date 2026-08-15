@@ -4,23 +4,27 @@ import "./index.css";
 import App from "./App.jsx";
 
 async function enableMocking() {
-  // 로컬 개발 환경에서만 MSW 실행
   if (!import.meta.env.DEV || import.meta.env.VITE_ENABLE_MSW !== "true") {
+    console.log("MSW 비활성화");
     return;
   }
+
+  console.log("MSW 시작 시도");
 
   const { worker } = await import("./mocks/browser.js");
 
   await worker.start({
     onUnhandledRequest: "bypass",
   });
+
+  console.log("MSW 시작 완료");
 }
 
 async function bootstrap() {
   try {
     await enableMocking();
-  } catch {
-    // Mock 서버를 사용할 수 없어도 애플리케이션 자체는 렌더링한다.
+  } catch (error) {
+    console.error("MSW 시작 실패:", error);
   }
 
   createRoot(document.getElementById("root")).render(

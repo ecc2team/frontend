@@ -1,7 +1,8 @@
 import styled from "@emotion/styled";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logoMark from "../assets/zeropick-mark.png";
 import logoWordmark from "../assets/zeropick-wordmark.png";
+import defaultProfile from "../assets/default-profile.png";
 
 const navItems = [
   ["카테고리", "/categories"],
@@ -203,19 +204,14 @@ const Actions = styled.div`
   }
 `;
 
-const Action = styled(Link, {
-  shouldForwardProp: (prop) => prop !== "$primary",
-})`
+const actionStyles = ({ $primary }) => `
   height: 64px;
   padding: 0 34px;
   border: 1px solid #df6bff;
   border-radius: 50px;
-  background: ${({ $primary }) => ($primary ? "#df69ff" : "#fff")};
-  color: ${({ $primary }) => ($primary ? "#fff" : "#000")};
-  font:
-    700 25px/1 Inter,
-    Arial,
-    sans-serif;
+  background: ${$primary ? "#df69ff" : "#fff"};
+  color: ${$primary ? "#fff" : "#000"};
+  font: 700 25px/1 Inter, Arial, sans-serif;
   white-space: nowrap;
   cursor: pointer;
   display: inline-flex;
@@ -226,6 +222,37 @@ const Action = styled(Link, {
   @media (max-width: 1180px) {
     padding: 0 22px;
     font-size: 20px;
+  }
+`;
+
+const Action = styled(Link, {
+  shouldForwardProp: (prop) => prop !== "$primary",
+})`
+  ${actionStyles}
+`;
+
+const LogoutButton = styled.button`
+  ${actionStyles}
+`;
+
+const ProfileLink = styled(Link)`
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: 0 0 70px;
+  display: block;
+
+  img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #df69ff;
+    outline-offset: 3px;
   }
 `;
 
@@ -243,6 +270,16 @@ const MobileMenu = styled.button`
 `;
 
 function Header() {
+  const navigate = useNavigate();
+  const isLoggedIn = Boolean(localStorage.getItem("accessToken"));
+
+  const logout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userId");
+    navigate("/", { replace: true });
+  };
+
   return (
     <Shell>
       <Inner>
@@ -273,10 +310,23 @@ function Header() {
           )}
         </Nav>
         <Actions>
-          <Action to="/login">로그인</Action>
-          <Action to="/signup" $primary>
-            회원가입
-          </Action>
+          {isLoggedIn ? (
+            <>
+              <ProfileLink to="/profile" aria-label="마이 페이지">
+                <img src={defaultProfile} alt="" />
+              </ProfileLink>
+              <LogoutButton type="button" $primary onClick={logout}>
+                로그아웃
+              </LogoutButton>
+            </>
+          ) : (
+            <>
+              <Action to="/login">로그인</Action>
+              <Action to="/signup" $primary>
+                회원가입
+              </Action>
+            </>
+          )}
         </Actions>
         <MobileMenu type="button" aria-label="메뉴 열기">
           ☰
