@@ -3,7 +3,7 @@ import styled from "@emotion/styled";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import SocialLoginButton from "../components/SocialLoginButton";
-const API = import.meta.env.VITE_LOGIN_API_URL || "/api/login";
+import { apiUrl } from "../api/client";
 const Page = styled.div`
   min-height: 100vh;
   background: #f9f4fd;
@@ -96,7 +96,7 @@ export default function Login() {
     setError("");
     const f = new FormData(e.currentTarget);
     try {
-      const res = await fetch(API, {
+      const res = await fetch(apiUrl("auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

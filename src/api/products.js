@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+import { apiUrl } from "./client";
 
 const normalizeIngredientName = (ingredient) =>
   typeof ingredient === "string"
@@ -78,7 +78,7 @@ const normalizeProductDetail = (product) => {
 export async function searchProducts({ query, page = 0, size = 20, signal }) {
   const params = new URLSearchParams({ query });
   const response = await fetch(
-    `${API_BASE_URL}/api/v1/products/search?${params.toString()}`,
+    `${apiUrl("products/search")}?${params.toString()}`,
     { signal },
   );
   const result = await response.json();
@@ -118,7 +118,7 @@ export async function searchProducts({ query, page = 0, size = 20, signal }) {
 
 export async function getProductDetail(productId, { signal } = {}) {
   const response = await fetch(
-    `${API_BASE_URL}/api/v1/products/${encodeURIComponent(productId)}`,
+    apiUrl(`products/${encodeURIComponent(productId)}`),
     { signal },
   );
   const result = await response.json();
