@@ -6,6 +6,11 @@ import {
   comparisonProducts,
   MAX_COMPARISON_PRODUCTS,
 } from "./data/comparisonProducts.js";
+import { mockUser, mockTokens } from "./data/mockUser.js";
+
+// TODO: Swagger의 실제 endpoint로 변경
+const SIGNUP_PATH = "/실제-회원가입-endpoint";
+const LOGIN_PATH = "/실제-로그인-endpoint";
 
 const createSearchResult = (product) => ({
   productId: product.productId,
@@ -117,6 +122,72 @@ export const handlers = [
       data: {
         savedCount: products.length,
         products,
+      },
+    });
+  }),
+
+  // 회원가입 Mock
+  http.post(SIGNUP_PATH, async ({ request }) => {
+    const body = await request.json();
+
+    const { email, password, nickname, onboarding } = body;
+
+    if (!email || !password || !nickname) {
+      return HttpResponse.json(
+        {
+          status: 400,
+          message: "필수 회원가입 정보가 누락되었습니다.",
+          data: null,
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        status: 201,
+        message: "회원가입이 성공적으로 완료되었습니다.",
+        data: {
+          userId: mockUser.userId,
+          email,
+          nickname,
+          onboarding,
+        },
+      },
+      {
+        status: 201,
+      },
+    );
+  }),
+
+  // 로그인 Mock
+  http.post(LOGIN_PATH, async ({ request }) => {
+    const body = await request.json();
+
+    const { email, password } = body;
+
+    if (email !== mockUser.email || password !== mockUser.password) {
+      return HttpResponse.json(
+        {
+          status: 401,
+          message: "이메일 또는 비밀번호가 올바르지 않습니다.",
+          data: null,
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
+    return HttpResponse.json({
+      status: 200,
+      message: "로그인이 성공적으로 완료되었습니다.",
+      data: {
+        userId: mockUser.userId,
+        accessToken: mockTokens.accessToken,
+        refreshToken: mockTokens.refreshToken,
       },
     });
   }),
