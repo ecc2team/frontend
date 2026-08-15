@@ -31,11 +31,17 @@ const normalizeSearchProduct = (product) => ({
 
 const normalizeAnalysisItem = (ingredient) => {
   if (typeof ingredient === "string") {
-    return { name: ingredient, riskLevel: "GENERAL", summary: "" };
+    return {
+      code: ingredient,
+      name: ingredient,
+      riskLevel: "GENERAL",
+      summary: "",
+    };
   }
 
   return {
     ...ingredient,
+    code: ingredient?.code || ingredient?.ingredientCode,
     name:
       ingredient?.name ||
       ingredient?.ingredientName ||

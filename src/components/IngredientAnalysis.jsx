@@ -1,4 +1,6 @@
+import { useCallback, useState } from "react";
 import styled from "@emotion/styled";
+import IngredientDetailModal from "./IngredientDetailModal";
 import safeIcon from "../assets/risk-safe.svg";
 import cautionIcon from "../assets/risk-caution.svg";
 import riskyIcon from "../assets/risk-risky.svg";
@@ -61,9 +63,17 @@ const IngredientList = styled.div`
   display: grid;
   gap: 16px;
 `;
-const Ingredient = styled.div`
+const Ingredient = styled.button`
+  width: 100%;
   padding-top: 14px;
   border-top: 1px solid #f3deff;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
   &:first-of-type {
     padding-top: 0;
     border-top: 0;
@@ -79,6 +89,15 @@ const Ingredient = styled.div`
     font-size: 15px;
     line-height: 1.5;
     overflow-wrap: anywhere;
+  }
+  &:hover h3,
+  &:focus-visible h3 {
+    color: #a032be;
+  }
+  &:focus-visible {
+    border-radius: 6px;
+    outline: 2px solid #df6bff;
+    outline-offset: 4px;
   }
 `;
 const Risk = styled.span`
@@ -130,6 +149,8 @@ export default function IngredientAnalysis({
   expanded,
   onToggle,
 }) {
+  const [selectedCode, setSelectedCode] = useState(null);
+  const closeModal = useCallback(() => setSelectedCode(null), []);
   const groups = Object.entries(analysis).filter(
     ([, ingredients]) => Array.isArray(ingredients) && ingredients.length > 0,
   );
@@ -166,7 +187,12 @@ export default function IngredientAnalysis({
               <Type>{groupLabel[groupKey] || groupKey}</Type>
               <IngredientList>
                 {visibleIngredients.map((item, index) => (
-                  <Ingredient key={`${item.name}-${index}`}>
+                  <Ingredient
+                    type="button"
+                    key={`${item.code || item.name}-${index}`}
+                    onClick={() => setSelectedCode(item.code || item.name)}
+                    aria-label={`${item.name} 상세 정보 보기`}
+                  >
                     <Risk>{riskLabel[item.riskLevel] || item.riskLevel}</Risk>
                     <h3>{item.name}</h3>
                     <p>{item.summary}</p>
@@ -181,6 +207,9 @@ export default function IngredientAnalysis({
         <More type="button" onClick={onToggle} aria-expanded={expanded}>
           {expanded ? "접기" : "더보기"}
         </More>
+      )}
+      {selectedCode && (
+        <IngredientDetailModal code={selectedCode} onClose={closeModal} />
       )}
     </>
   );
