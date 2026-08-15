@@ -1,8 +1,9 @@
-import { apiUrl } from "./client";
+import { apiUrl, authHeaders } from "./client";
 
 export async function getComparisonList({ signal } = {}) {
   const response = await fetch(apiUrl("comparison-box"), {
     method: "GET",
+    headers: authHeaders(),
     signal,
   });
 

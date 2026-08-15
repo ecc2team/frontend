@@ -76,7 +76,11 @@ const normalizeProductDetail = (product) => {
 };
 
 export async function searchProducts({ query, page = 0, size = 20, signal }) {
-  const params = new URLSearchParams({ query });
+  const params = new URLSearchParams({
+    query,
+    page: String(page),
+    size: String(size),
+  });
   const response = await fetch(
     `${apiUrl("products/search")}?${params.toString()}`,
     { signal },

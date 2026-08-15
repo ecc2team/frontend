@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import { apiUrl } from "../api/client.js";
 import { products } from "./data/products.js";
 import { profile } from "./data/profile.js";
 import {
@@ -34,7 +35,7 @@ const createProductDetail = (product) => ({
 
 export const handlers = [
   // 제품 검색
-  http.get("/api/v1/products/search", ({ request }) => {
+  http.get(apiUrl("products/search"), ({ request }) => {
     const url = new URL(request.url);
 
     const query = (url.searchParams.get("query") ?? "").trim().toLowerCase();
@@ -72,7 +73,7 @@ export const handlers = [
   }),
 
   // 제품 상세 조회
-  http.get("/api/v1/products/:productId", ({ params }) => {
+  http.get(apiUrl("products/:productId"), ({ params }) => {
     const productId = Number(params.productId);
 
     const product = products.find((item) => item.productId === productId);
@@ -98,7 +99,7 @@ export const handlers = [
   }),
 
   // 프로필 조회 Mock
-  http.get("/api/v1/profile", () => {
+  http.get(apiUrl("profile"), () => {
     return HttpResponse.json({
       status: 200,
       message: "프로필 조회가 성공적으로 완료되었습니다.",
@@ -107,23 +108,7 @@ export const handlers = [
   }),
 
   // 비교함 목록 조회 Mock
-  http.get("/api/v1/comparisons", () => {
-    const visibleProducts = comparisonProducts.slice(
-      0,
-      MAX_COMPARISON_PRODUCTS,
-    );
-
-    return HttpResponse.json({
-      status: 200,
-      message: "내 비교함 목록 조회가 완료되었습니다.",
-      data: {
-        savedCount: visibleProducts.length,
-        products: visibleProducts,
-      },
-    });
-  }),
-
-  http.get("/api/v1/comparison-box", () => {
+  http.get(apiUrl("comparison-box"), () => {
     const products = comparisonProducts.slice(0, MAX_COMPARISON_PRODUCTS);
 
     return HttpResponse.json({
