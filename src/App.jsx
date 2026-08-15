@@ -7,6 +7,7 @@ import ProductSearchResult from "./pages/ProductSearchResult";
 import ProductDetail from "./pages/ProductDetail";
 import ComparisonList from "./pages/ComparisonList";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Records from "./pages/Records";
 
 const routes = [
   ["/categories", "카테고리"],
@@ -55,7 +56,7 @@ function App() {
           path="/records"
           element={
             <ProtectedRoute>
-              <SectionPage title="기록" />
+              <Records />
             </ProtectedRoute>
           }
         />
