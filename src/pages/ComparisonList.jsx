@@ -4,7 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import ComparisonProductCard from "../components/ComparisonProductCard";
 import addCircle from "../assets/compare-add.svg";
-import { getComparisonList } from "../api/comparison-list";
+import {
+  getComparisonList,
+  MAX_COMPARISON_PRODUCTS,
+  removeFromLocalComparisonList,
+} from "../api/comparison-list";
 import {
   getComparisonSelection,
   saveComparisonSelection,
@@ -12,7 +16,6 @@ import {
 
 const PAGE_SIZE = 8;
 const MAX_SELECTED_PRODUCTS = 3;
-const MAX_COMPARISON_PRODUCTS = 50;
 
 const Page = styled.div`
   min-height: 100svh;
@@ -254,6 +257,7 @@ function ComparisonList() {
   };
 
   const removeProduct = (productId) => {
+    removeFromLocalComparisonList(productId);
     setProducts((current) =>
       current.filter((product) => product.productId !== productId),
     );
