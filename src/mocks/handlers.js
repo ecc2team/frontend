@@ -8,6 +8,7 @@ import {
   MAX_COMPARISON_PRODUCTS,
 } from "./data/comparisonProducts.js";
 import { mockUser, mockTokens } from "./data/mockUser.js";
+import { recentProducts } from "./data/recentProducts.js";
 
 // TODO: Swagger의 실제 endpoint로 변경
 const SIGNUP_PATH = apiUrl("auth/signup");
@@ -63,6 +64,17 @@ const createProductDetail = (product) => ({
 });
 
 export const handlers = [
+  http.get(apiUrl("products/recent"), () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "최근 본 상품 목록 조회가 완료되었습니다.",
+      data: {
+        totalElements: recentProducts.length,
+        content: recentProducts,
+      },
+    });
+  }),
+
   // 제품 검색
   http.get(apiUrl("products/search"), ({ request }) => {
     const url = new URL(request.url);

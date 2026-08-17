@@ -11,13 +11,13 @@ import ProductComparison from "./pages/ProductComparison";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Records from "./pages/Records";
 import OAuthCallback from "./pages/OAuthCallback";
+import RecentProducts from "./pages/RecentProducts";
 
 const routes = [
   ["/categories", "카테고리"],
   ["/recommendations", "추천"],
   ["/ranking", "랭킹"],
   ["/compare", "비교함"],
-  ["/group-buy", "공구"],
   ["/records", "기록"],
   ["/categories/drinks", "음료수"],
   ["/categories/protein-bars", "단백질 바"],
@@ -44,6 +44,14 @@ function App() {
         />
         <Route path="/search" element={<ProductSearchResult />} />
         <Route path="/products/:productId" element={<ProductDetail />} />
+        <Route
+          path="/recent-products"
+          element={
+            <ProtectedRoute>
+              <RecentProducts />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/compare"
           element={
