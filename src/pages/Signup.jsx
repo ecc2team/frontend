@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import PreferenceRow from "../components/PreferenceRow";
 import SocialLoginButton from "../components/SocialLoginButton";
+import PasswordInput from "../components/PasswordInput";
 import { signupOptions } from "../data/signupOptions";
 import { checkDuplicate, signup } from "../services/signupApi";
 import { sendEmailCode, verifyEmailCode } from "../api/email";
@@ -437,14 +438,25 @@ export default function Signup() {
               <Fragment key={key}>
                 <Field>
                   <FieldLabel htmlFor={key}>{label}</FieldLabel>
-                  <Input
-                    id={key}
-                    type={type}
-                    value={values[key]}
-                    onChange={(event) => changeValue(key, event.target.value)}
-                    placeholder={placeholder}
-                    required
-                  />
+                  {key === "password" ? (
+                    <PasswordInput
+                      id={key}
+                      value={values[key]}
+                      onChange={(event) => changeValue(key, event.target.value)}
+                      placeholder={placeholder}
+                      autoComplete="new-password"
+                      required
+                    />
+                  ) : (
+                    <Input
+                      id={key}
+                      type={type}
+                      value={values[key]}
+                      onChange={(event) => changeValue(key, event.target.value)}
+                      placeholder={placeholder}
+                      required
+                    />
+                  )}
                   <VerifyArea>
                     <Verify
                       type="button"

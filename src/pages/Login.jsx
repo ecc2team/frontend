@@ -3,6 +3,7 @@ import styled from "@emotion/styled";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import SocialLoginButton from "../components/SocialLoginButton";
+import PasswordInput from "../components/PasswordInput";
 import { login } from "../api/auth";
 const Page = styled.div`
   min-height: 100vh;
@@ -125,12 +126,12 @@ export default function Login() {
             autoComplete="email"
             required
           />
-          <Input
+          <PasswordInput
             name="password"
-            type="password"
             placeholder="비밀번호를 입력하세요"
             autoComplete="current-password"
             required
+            large
           />
           <Button disabled={loading}>
             {loading ? "로그인 중..." : "로그인"}
