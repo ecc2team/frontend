@@ -4,6 +4,19 @@ import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import { deleteConsumptionRecord, getDailyRecords } from "../api/records";
 import { getKstDateKey, moveDate } from "../utils/dateTime";
+import sugarIcon from "../assets/nutrition-sugar.svg";
+import sodiumIcon from "../assets/nutrition-sodium.svg";
+import saturatedFatIcon from "../assets/nutrition-saturated-fat.svg";
+import proteinIcon from "../assets/nutrition-protein.svg";
+import fiberIcon from "../assets/nutrition-fiber.svg";
+
+const NUTRIENT_ICONS = {
+  sugar: sugarIcon,
+  sodium: sodiumIcon,
+  saturatedFat: saturatedFatIcon,
+  protein: proteinIcon,
+  fiber: fiberIcon,
+};
 
 const Page = styled.div`
   min-height: 100svh;
@@ -106,7 +119,13 @@ const Nutrient = styled.div`
     height: 44px;
     margin: 0 auto 8px;
     border-radius: 50%;
-    background: #d9d9d9;
+    background: #f7f3ff;
+    display: grid;
+    place-items: center;
+  }
+  .icon img {
+    width: 30px;
+    height: 30px;
   }
   p,
   strong {
@@ -408,7 +427,9 @@ export default function Records() {
                 <NutrientGrid>
                   {data.nutrients.map((nutrient) => (
                     <Nutrient key={nutrient.key}>
-                      <div className="icon" />
+                      <div className="icon" aria-hidden="true">
+                        <img src={NUTRIENT_ICONS[nutrient.key]} alt="" />
+                      </div>
                       <p>{nutrient.label}</p>
                       <strong>{nutrient.percentage}%</strong>
                       <Track
