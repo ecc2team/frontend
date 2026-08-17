@@ -1,8 +1,8 @@
-import { apiUrl, authenticatedFetch } from "./client";
+import { apiUrl, deduplicatedGet } from "./client";
 
 export async function getComparisonList({ signal } = {}) {
-  const response = await authenticatedFetch(apiUrl("comparison-box"), {
-    method: "GET",
+  const response = await deduplicatedGet(apiUrl("comparison-box"), {
+    authenticated: true,
     signal,
   });
 

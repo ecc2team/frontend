@@ -1,4 +1,4 @@
-import { apiUrl } from "./client";
+import { apiUrl, deduplicatedGet } from "./client";
 import { resolveIngredientCode } from "../data/ingredientCodes";
 
 const normalizeIngredientName = (ingredient) =>
@@ -99,7 +99,7 @@ export async function searchProducts({ query, page = 0, size = 20, signal }) {
     page: String(page),
     size: String(size),
   });
-  const response = await fetch(
+  const response = await deduplicatedGet(
     `${apiUrl("products/search")}?${params.toString()}`,
     { signal },
   );
@@ -139,7 +139,7 @@ export async function searchProducts({ query, page = 0, size = 20, signal }) {
 }
 
 export async function getProductDetail(productId, { signal } = {}) {
-  const response = await fetch(
+  const response = await deduplicatedGet(
     apiUrl(`products/${encodeURIComponent(productId)}`),
     { signal },
   );

@@ -2,6 +2,42 @@ import { apiUrl } from "./config.js";
 
 export { apiUrl };
 
+const inFlightGetRequests = new Map();
+
+const createAbortError = () =>
+  new DOMException("The operation was aborted.", "AbortError");
+
+const serializeHeaders = (headers = {}) =>
+  [...new Headers(headers).entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([name, value]) => `${name}:${value}`)
+    .join("|");
+
+const subscribeToGetRequest = (request, signal) => {
+  if (!signal) return request.then((response) => response.clone());
+  if (signal.aborted) return Promise.reject(createAbortError());
+
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(createAbortError());
+    signal.addEventListener("abort", abort, { once: true });
+
+    request.then(
+      (response) => {
+        signal.removeEventListener("abort", abort);
+        if (signal.aborted) {
+          reject(createAbortError());
+          return;
+        }
+        resolve(response.clone());
+      },
+      (error) => {
+        signal.removeEventListener("abort", abort);
+        reject(error);
+      },
+    );
+  });
+};
+
 export function authHeaders(headers = {}) {
   const accessToken = localStorage.getItem("accessToken");
 
@@ -85,4 +121,37 @@ export async function authenticatedFetch(url, options = {}) {
   }
 
   return response;
+}
+
+export function deduplicatedGet(
+  url,
+  { signal, authenticated = false, headers = {}, credentials } = {},
+) {
+  const authScope = authenticated
+    ? `authenticated:${localStorage.getItem("accessToken") || "anonymous"}`
+    : "public";
+  const key = [authScope, url, credentials || "", serializeHeaders(headers)].join(
+    "::",
+  );
+
+  let request = inFlightGetRequests.get(key);
+
+  if (!request) {
+    const options = {
+      method: "GET",
+      headers,
+      ...(credentials ? { credentials } : {}),
+    };
+    request = (authenticated
+      ? authenticatedFetch(url, options)
+      : fetch(url, options)
+    ).finally(() => {
+      if (inFlightGetRequests.get(key) === request) {
+        inFlightGetRequests.delete(key);
+      }
+    });
+    inFlightGetRequests.set(key, request);
+  }
+
+  return subscribeToGetRequest(request, signal);
 }
