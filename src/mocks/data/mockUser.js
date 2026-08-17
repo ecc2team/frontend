@@ -13,5 +13,4 @@ export const mockUser = {
 
 export const mockTokens = {
   accessToken: "mock-access-token-zerolover",
-  refreshToken: "mock-refresh-token-zerolover",
 };

@@ -1,8 +1,10 @@
+import { useState } from "react";
 import styled from "@emotion/styled";
 import { Link, useNavigate } from "react-router-dom";
 import logoMark from "../assets/zeropick-mark.png";
 import logoWordmark from "../assets/zeropick-wordmark.png";
 import defaultProfile from "../assets/default-profile.png";
+import { logout as requestLogout } from "../api/auth";
 
 const navItems = [
   ["카테고리", "/categories"],
@@ -271,13 +273,19 @@ const MobileMenu = styled.button`
 
 function Header() {
   const navigate = useNavigate();
-  const isLoggedIn = Boolean(localStorage.getItem("accessToken"));
+  const [isLoggedIn, setIsLoggedIn] = useState(() =>
+    Boolean(localStorage.getItem("accessToken")),
+  );
 
-  const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("userId");
-    navigate("/", { replace: true });
+  const logout = async () => {
+    try {
+      await requestLogout();
+    } catch {
+      // 서버 로그아웃 실패 시에도 로컬 인증 상태는 logout()에서 정리됩니다.
+    } finally {
+      setIsLoggedIn(false);
+      navigate("/", { replace: true });
+    }
   };
 
   return (

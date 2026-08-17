@@ -12,6 +12,7 @@ import { mockUser, mockTokens } from "./data/mockUser.js";
 // TODO: Swagger의 실제 endpoint로 변경
 const SIGNUP_PATH = apiUrl("auth/signup");
 const LOGIN_PATH = apiUrl("auth/login");
+const MOCK_EMAIL_CODE = "123456";
 
 const createSearchResult = (product) => ({
   productId: product.productId,
@@ -127,6 +128,45 @@ export const handlers = [
     });
   }),
 
+  http.get(apiUrl("users/check-email"), ({ request }) => {
+    const email = new URL(request.url).searchParams.get("email") || "";
+    return HttpResponse.json({
+      status: 200,
+      message: "이메일 중복 확인이 완료되었습니다.",
+      data: { email, isAvailable: email !== mockUser.email },
+    });
+  }),
+
+  http.post(apiUrl("emails/send-code"), async ({ request }) => {
+    const { email } = await request.json();
+    if (!email) {
+      return HttpResponse.json(
+        { status: 400, message: "이메일을 입력해주세요.", data: null },
+        { status: 400 },
+      );
+    }
+    return HttpResponse.json({
+      status: 200,
+      message: "이메일 인증번호가 발송되었습니다.",
+      data: null,
+    });
+  }),
+
+  http.post(apiUrl("emails/verify-code"), async ({ request }) => {
+    const { email, code } = await request.json();
+    const emailVerified = Boolean(email) && code === MOCK_EMAIL_CODE;
+    return HttpResponse.json(
+      {
+        status: emailVerified ? 200 : 400,
+        message: emailVerified
+          ? "이메일 인증에 성공하였습니다."
+          : "인증번호가 올바르지 않습니다.",
+        data: { emailVerified },
+      },
+      { status: emailVerified ? 200 : 400 },
+    );
+  }),
+
   // 회원가입 Mock
   http.get(apiUrl("ingredients"), () => {
     return HttpResponse.json({
@@ -221,8 +261,26 @@ export const handlers = [
       data: {
         userId: mockUser.userId,
         accessToken: mockTokens.accessToken,
-        refreshToken: mockTokens.refreshToken,
       },
+    });
+  }),
+
+  http.post(apiUrl("auth/reissue"), () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "Access Token이 재발급되었습니다.",
+      data: {
+        userId: mockUser.userId,
+        accessToken: `${mockTokens.accessToken}-reissued`,
+      },
+    });
+  }),
+
+  http.post(apiUrl("auth/logout"), () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "로그아웃이 완료되었습니다.",
+      data: null,
     });
   }),
 ];
