@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import PreferenceRow from "../components/PreferenceRow";
 import SocialLoginButton from "../components/SocialLoginButton";
@@ -8,6 +8,8 @@ import PasswordInput from "../components/PasswordInput";
 import { signupOptions } from "../data/signupOptions";
 import { checkDuplicate, signup } from "../services/signupApi";
 import { sendEmailCode, verifyEmailCode } from "../api/email";
+import { submitSocialOnboarding } from "../api/auth";
+import { startOAuth } from "../config/oauth";
 import checkIcon from "../assets/signup-check.svg";
 
 const Page = styled.div`
@@ -73,6 +75,11 @@ const Input = styled.input`
   }
   &:focus {
     border-color: #a032be;
+  }
+  &:read-only {
+    background: #f1eff2;
+    color: #6d6670;
+    cursor: default;
   }
 `;
 const VerifyArea = styled.div`
@@ -242,16 +249,16 @@ const fields = [
 
 export default function Signup() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const socialProvider = searchParams.get("social");
-  const isSocialSignup = ["kakao", "google"].includes(socialProvider);
-  const visibleFields = isSocialSignup
-    ? fields.filter(({ key }) => key !== "email")
+  const location = useLocation();
+  const socialOnboarding = location.state?.socialOnboarding;
+  const isSocialOnboarding = Boolean(socialOnboarding);
+  const visibleFields = isSocialOnboarding
+    ? fields.filter(({ key }) => key !== "password")
     : fields;
   const [values, setValues] = useState({
-    email: "",
+    email: socialOnboarding?.email ?? "",
     password: "",
-    nickname: "",
+    nickname: socialOnboarding?.nickname ?? "",
   });
   const [verified, setVerified] = useState({
     email: false,
@@ -385,37 +392,43 @@ export default function Signup() {
     }));
   const submit = async (event) => {
     event.preventDefault();
-    if (!visibleFields.every(({ key }) => verified[key])) {
+    if (
+      !isSocialOnboarding &&
+      !visibleFields.every(({ key }) => verified[key])
+    ) {
       setMessage({
         text: "기본 정보의 중복 확인을 모두 완료해주세요.",
         error: true,
       });
       return;
     }
-    if (!isSocialSignup && !emailCodeVerified) {
+    if (!isSocialOnboarding && !emailCodeVerified) {
       setMessage({ text: "이메일 인증을 완료해주세요.", error: true });
       return;
     }
     setLoading(true);
     setMessage({ text: "", error: false });
     try {
-      const result = await signup({
-        email: values.email,
-        password: values.password,
-        nickname: values.nickname,
-        onboarding: {
-          preferredCategories: selections.preferredCategories,
-          dislikedIngredients: selections.dislikedIngredients,
-          allergyFlags: selections.allergyFlags,
-        },
-      });
+      const onboarding = {
+        preferredCategories: selections.preferredCategories,
+        dislikedIngredients: selections.dislikedIngredients,
+        allergyFlags: selections.allergyFlags,
+      };
+      const result = isSocialOnboarding
+        ? await submitSocialOnboarding(onboarding)
+        : await signup({
+            email: values.email,
+            password: values.password,
+            nickname: values.nickname,
+            onboarding,
+          });
       setMessage({
         text: result?.message || "회원가입이 완료되었습니다.",
         error: false,
       });
       setTimeout(() => navigate("/", { replace: true }), 700);
     } catch (error) {
-      if (error.status === 409) {
+      if (!isSocialOnboarding && error.status === 409) {
         setEmailCodeVerified(false);
         setEmailCode("");
         setResendSeconds(0);
@@ -454,25 +467,30 @@ export default function Signup() {
                       value={values[key]}
                       onChange={(event) => changeValue(key, event.target.value)}
                       placeholder={placeholder}
-                      required
+                      readOnly={isSocialOnboarding}
+                      required={!isSocialOnboarding}
                     />
                   )}
-                  <VerifyArea>
-                    <Verify
-                      type="button"
-                      disabled={checkingField === key}
-                      onClick={() => verify(key)}
-                    >
-                      {checkingField === key ? "확인 중" : "중복 확인"}
-                    </Verify>
-                    {verified[key] && (
-                      <Check>
-                        <img src={checkIcon} alt="사용 가능" />
-                      </Check>
-                    )}
-                  </VerifyArea>
+                  {isSocialOnboarding ? (
+                    <span />
+                  ) : (
+                    <VerifyArea>
+                      <Verify
+                        type="button"
+                        disabled={checkingField === key}
+                        onClick={() => verify(key)}
+                      >
+                        {checkingField === key ? "확인 중" : "중복 확인"}
+                      </Verify>
+                      {verified[key] && (
+                        <Check>
+                          <img src={checkIcon} alt="사용 가능" />
+                        </Check>
+                      )}
+                    </VerifyArea>
+                  )}
                 </Field>
-                {key === "email" && (
+                {key === "email" && !isSocialOnboarding && (
                   <VerificationCodeRow>
                     <VerificationCodeLabel htmlFor="email-verification-code">
                       인증 번호
@@ -540,19 +558,19 @@ export default function Signup() {
               {message.text}
             </Message>
           )}
-          {!isSocialSignup && (
+          {!isSocialOnboarding && (
             <>
               <SocialDivider />
               <SocialGuide>소셜 계정으로 회원가입</SocialGuide>
               <SocialButtons>
                 <SocialLoginButton
                   provider="kakao"
-                  to="/signup?social=kakao"
+                  onClick={() => startOAuth("kakao")}
                   label="카카오톡으로 회원가입"
                 />
                 <SocialLoginButton
                   provider="google"
-                  to="/signup?social=google"
+                  onClick={() => startOAuth("google")}
                   label="Google로 회원가입"
                 />
               </SocialButtons>

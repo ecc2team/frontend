@@ -10,6 +10,7 @@ import Profile from "./pages/Profile";
 import ProductComparison from "./pages/ProductComparison";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Records from "./pages/Records";
+import OAuthCallback from "./pages/OAuthCallback";
 
 const routes = [
   ["/categories", "카테고리"],
@@ -18,8 +19,6 @@ const routes = [
   ["/compare", "비교함"],
   ["/group-buy", "공구"],
   ["/records", "기록"],
-  ["/auth/kakao", "카카오 로그인"],
-  ["/auth/google", "Google 로그인"],
   ["/categories/drinks", "음료수"],
   ["/categories/protein-bars", "단백질 바"],
   ["/categories/snacks", "간식류"],
@@ -35,6 +34,14 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/oauth/kakao/callback"
+          element={<OAuthCallback provider="kakao" />}
+        />
+        <Route
+          path="/oauth/google/callback"
+          element={<OAuthCallback provider="google" />}
+        />
         <Route path="/search" element={<ProductSearchResult />} />
         <Route path="/products/:productId" element={<ProductDetail />} />
         <Route

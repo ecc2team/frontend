@@ -14,6 +14,28 @@ const SIGNUP_PATH = apiUrl("auth/signup");
 const LOGIN_PATH = apiUrl("auth/login");
 const MOCK_EMAIL_CODE = "123456";
 
+const socialCallback = async ({ request }) => {
+  const { authCode, redirectUri } = await request.json();
+  if (!authCode || !redirectUri) {
+    return HttpResponse.json(
+      { status: 400, message: "OAuth 요청 정보가 올바르지 않습니다.", data: null },
+      { status: 400 },
+    );
+  }
+
+  return HttpResponse.json({
+    status: 200,
+    message: "소셜 로그인이 완료되었습니다.",
+    data: {
+      userId: mockUser.userId,
+      accessToken: mockTokens.accessToken,
+      isNewUser: true,
+      email: mockUser.email,
+      nickname: mockUser.nickname,
+    },
+  });
+};
+
 const createSearchResult = (product) => ({
   productId: product.productId,
   productName: product.productName,
@@ -198,6 +220,25 @@ export const handlers = [
         description: ingredient.summary,
       },
       status: 200,
+    });
+  }),
+
+  http.post(apiUrl("auth/kakao"), socialCallback),
+  http.post(apiUrl("auth/google"), socialCallback),
+
+  http.post(apiUrl("auth/onboarding"), async ({ request }) => {
+    const { onboarding } = await request.json();
+    if (!onboarding) {
+      return HttpResponse.json(
+        { status: 400, message: "온보딩 정보가 없습니다.", data: null },
+        { status: 400 },
+      );
+    }
+
+    return HttpResponse.json({
+      status: 200,
+      message: "맞춤 취향 설정이 완료되었습니다.",
+      data: { userId: mockUser.userId },
     });
   }),
 

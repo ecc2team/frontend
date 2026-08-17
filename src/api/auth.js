@@ -1,4 +1,7 @@
 import { apiUrl, authHeaders, clearAuth, readJson } from "./client";
+import { OAUTH_CONFIG } from "../config/oauth";
+
+const socialCallbackRequests = new Map();
 
 async function authRequest(path, options) {
   const response = await fetch(apiUrl(path), {
@@ -21,6 +24,52 @@ export function login({ email, password }) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
+  });
+}
+
+function loginWithSocial(provider, authCode) {
+  const config = OAUTH_CONFIG[provider];
+  if (!config || !authCode) {
+    return Promise.reject(new Error("소셜 로그인 정보가 올바르지 않습니다."));
+  }
+
+  const requestKey = `${provider}:${authCode}`;
+  let request = socialCallbackRequests.get(requestKey);
+
+  if (!request) {
+    request = authRequest(`auth/${provider}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        authCode,
+        redirectUri: config.redirectUri,
+      }),
+    });
+    socialCallbackRequests.set(requestKey, request);
+  }
+
+  return request;
+}
+
+export function loginWithKakao(authCode) {
+  return loginWithSocial("kakao", authCode);
+}
+
+export function loginWithGoogle(authCode) {
+  return loginWithSocial("google", authCode);
+}
+
+export function submitSocialOnboarding(onboarding) {
+  return authRequest("auth/onboarding", {
+    method: "POST",
+    headers: authHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      onboarding: {
+        preferredCategories: onboarding.preferredCategories ?? [],
+        dislikedIngredients: onboarding.dislikedIngredients ?? [],
+        allergyFlags: onboarding.allergyFlags ?? [],
+      },
+    }),
   });
 }
 
