@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "@emotion/styled";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
-import { getDailyRecords } from "../api/records";
+import { deleteConsumptionRecord, getDailyRecords } from "../api/records";
 import { getKstDateKey, moveDate } from "../utils/dateTime";
 
 const Page = styled.div`
@@ -193,6 +193,50 @@ const RecordRow = styled.article`
     text-align: right;
   }
 `;
+const RecordMenu = styled.div`
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+`;
+const MenuButton = styled.button`
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #5c5454;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  &:hover,
+  &:focus-visible {
+    background: #f9f0fc;
+    outline: none;
+  }
+`;
+const DeleteButton = styled.button`
+  position: absolute;
+  top: 34px;
+  right: 0;
+  z-index: 10;
+  width: 88px;
+  height: 38px;
+  border: 1px solid #a032be;
+  border-radius: 8px;
+  background: #fff;
+  color: #a032be;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 7px 18px rgb(71 33 80 / 16%);
+  cursor: pointer;
+  &:hover,
+  &:focus-visible {
+    background: #f9f0fc;
+    outline: none;
+  }
+`;
 const Empty = styled.p`
   margin: 78px 0;
   color: #5c5454;
@@ -275,6 +319,8 @@ const Status = styled.p`
 
 export default function Records() {
   const [date, setDate] = useState(() => getKstDateKey());
+  const [revision, setRevision] = useState(0);
+  const [openMenuId, setOpenMenuId] = useState(null);
   const [state, setState] = useState({
     status: "loading",
     data: null,
@@ -297,7 +343,13 @@ export default function Records() {
       active = false;
       controller.abort();
     };
-  }, [date]);
+  }, [date, revision]);
+
+  const handleDelete = (recordId) => {
+    if (!deleteConsumptionRecord(recordId)) return;
+    setOpenMenuId(null);
+    setRevision((value) => value + 1);
+  };
 
   const data = state.data;
   const caloriePercentage = useMemo(() => {
@@ -392,7 +444,32 @@ export default function Records() {
                       <p>{record.amount}</p>
                     </div>
                     <strong>{record.calories} kcal</strong>
-                    <strong>···</strong>
+                    {record.isLocal ? (
+                      <RecordMenu>
+                        <MenuButton
+                          type="button"
+                          aria-label={`${record.productName} 기록 메뉴`}
+                          aria-expanded={openMenuId === record.id}
+                          onClick={() =>
+                            setOpenMenuId((currentId) =>
+                              currentId === record.id ? null : record.id,
+                            )
+                          }
+                        >
+                          ···
+                        </MenuButton>
+                        {openMenuId === record.id && (
+                          <DeleteButton
+                            type="button"
+                            onClick={() => handleDelete(record.id)}
+                          >
+                            삭제하기
+                          </DeleteButton>
+                        )}
+                      </RecordMenu>
+                    ) : (
+                      <span />
+                    )}
                   </RecordRow>
                 ))}
                 <AddProduct to="/search">+ 다른 제품 추가하기</AddProduct>

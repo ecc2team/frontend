@@ -27,6 +27,7 @@ const normalizeRecord = (record) => ({
   amount: record.amount ?? record.serving ?? record.quantityText ?? "",
   calories: Number(record.calories ?? record.nutrition?.calories) || 0,
   nutrition: record.nutrition ?? {},
+  isLocal: Boolean(record.isLocal),
   consumedAt:
     record.consumedAt ??
     record.recordedAt ??
@@ -52,7 +53,7 @@ const readLocalRecords = () => {
 const getLocalRecordsByDate = (date) =>
   readLocalRecords()
     .filter((record) => getKstDateKey(record.consumedAt) === date)
-    .map(normalizeRecord);
+    .map((record) => normalizeRecord({ ...record, isLocal: true }));
 
 const createNutrients = (records, source = {}) => {
   const totals = records.reduce(
@@ -101,6 +102,18 @@ export function addConsumptionRecord(product, consumedAt = new Date()) {
 
   localStorage.setItem(LOCAL_RECORDS_KEY, JSON.stringify([...records, record]));
   return normalizeRecord(record);
+}
+
+export function deleteConsumptionRecord(recordId) {
+  const records = readLocalRecords();
+  const nextRecords = records.filter(
+    (record) => String(record.recordId ?? record.id) !== String(recordId),
+  );
+
+  if (nextRecords.length === records.length) return false;
+
+  localStorage.setItem(LOCAL_RECORDS_KEY, JSON.stringify(nextRecords));
+  return true;
 }
 
 export async function getDailyRecords(date, { signal } = {}) {
