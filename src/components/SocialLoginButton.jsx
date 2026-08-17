@@ -1,8 +1,8 @@
 import styled from "@emotion/styled";
-import { Link } from "react-router-dom";
-const Circle = styled(Link, { shouldForwardProp: (prop) => prop !== "$kakao" })`
+const Circle = styled.button`
   width: 62px;
   height: 62px;
+  padding: 0;
   border: 1px solid ${(p) => (p.$kakao ? "#f5d900" : "#ddd")};
   border-radius: 50%;
   background: ${(p) => (p.$kakao ? "#fee500" : "#fff")};
@@ -19,10 +19,16 @@ const Circle = styled(Link, { shouldForwardProp: (prop) => prop !== "$kakao" })`
     height: 32px;
   }
 `;
-export default function SocialLoginButton({ provider, to, label }) {
+export default function SocialLoginButton({ provider, onClick, label }) {
   const kakao = provider === "kakao";
   return (
-    <Circle to={to} $kakao={kakao} aria-label={label} title={label}>
+    <Circle
+      type="button"
+      onClick={onClick}
+      $kakao={kakao}
+      aria-label={label}
+      title={label}
+    >
       {kakao ? (
         <svg viewBox="0 0 36 36">
           <path

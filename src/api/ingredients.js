@@ -1,4 +1,4 @@
-import { apiUrl } from "./client";
+import { apiUrl, deduplicatedGet } from "./client";
 
 export async function getIngredientDetail(code, { signal } = {}) {
   const normalizedCode = String(code ?? "").trim();
@@ -7,7 +7,7 @@ export async function getIngredientDetail(code, { signal } = {}) {
     throw new Error("성분 코드가 없어 상세 정보를 조회할 수 없습니다.");
   }
 
-  const response = await fetch(
+  const response = await deduplicatedGet(
     apiUrl(`ingredients/${encodeURIComponent(normalizedCode)}`),
     { signal },
   );

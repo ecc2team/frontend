@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import SocialLoginButton from "../components/SocialLoginButton";
 import PasswordInput from "../components/PasswordInput";
 import { login } from "../api/auth";
+import { startOAuth } from "../config/oauth";
 const Page = styled.div`
   min-height: 100vh;
   background: #f9f4fd;
@@ -145,12 +146,12 @@ export default function Login() {
           <Social>
             <SocialLoginButton
               provider="kakao"
-              to="/auth/kakao"
+              onClick={() => startOAuth("kakao")}
               label="카카오톡으로 로그인"
             />
             <SocialLoginButton
               provider="google"
-              to="/auth/google"
+              onClick={() => startOAuth("google")}
               label="Google로 로그인"
             />
           </Social>

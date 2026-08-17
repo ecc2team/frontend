@@ -1,4 +1,5 @@
 import { formatKstTime, getKstDateKey } from "../utils/dateTime";
+import { deduplicatedGet } from "./client";
 
 const DAILY_RECORDS_API_URL = import.meta.env.VITE_DAILY_RECORDS_API_URL;
 const LOCAL_RECORDS_KEY = "zeropick:consumption-records";
@@ -135,10 +136,9 @@ export async function getDailyRecords(date, { signal } = {}) {
   const userId = localStorage.getItem("userId");
   if (userId) url.searchParams.set("userId", userId);
 
-  const accessToken = localStorage.getItem("accessToken");
-  const response = await fetch(url, {
+  const response = await deduplicatedGet(url.toString(), {
     signal,
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    authenticated: true,
   });
   const result = await response.json();
 

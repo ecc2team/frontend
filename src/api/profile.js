@@ -1,8 +1,8 @@
-import { apiUrl, authenticatedFetch } from "./client";
+import { apiUrl, deduplicatedGet } from "./client";
 
 export async function getProfile({ signal } = {}) {
-  const response = await authenticatedFetch(apiUrl("profile"), {
-    method: "GET",
+  const response = await deduplicatedGet(apiUrl("profile"), {
+    authenticated: true,
     signal,
   });
 
