@@ -3,7 +3,7 @@ import styled from "@emotion/styled";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import SocialLoginButton from "../components/SocialLoginButton";
-import { apiUrl } from "../api/client";
+import { login } from "../api/auth";
 const Page = styled.div`
   min-height: 100vh;
   background: #f9f4fd;
@@ -96,19 +96,14 @@ export default function Login() {
     setError("");
     const f = new FormData(e.currentTarget);
     try {
-      const res = await fetch(apiUrl("auth/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: f.get("email"),
-          password: f.get("password"),
-        }),
+      const json = await login({
+        email: f.get("email"),
+        password: f.get("password"),
       });
-      const json = await res.json();
-      if (!res.ok || json.status !== 200)
-        throw new Error(json.message || "로그인에 실패했습니다.");
+      if (!json?.data?.accessToken) {
+        throw new Error("로그인 응답 형식이 올바르지 않습니다.");
+      }
       localStorage.setItem("accessToken", json.data.accessToken);
-      localStorage.setItem("refreshToken", json.data.refreshToken);
       localStorage.setItem("userId", String(json.data.userId));
       nav("/", { replace: true });
     } catch (err) {

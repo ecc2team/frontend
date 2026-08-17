@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
@@ -6,6 +6,7 @@ import PreferenceRow from "../components/PreferenceRow";
 import SocialLoginButton from "../components/SocialLoginButton";
 import { signupOptions } from "../data/signupOptions";
 import { checkDuplicate, signup } from "../services/signupApi";
+import { sendEmailCode, verifyEmailCode } from "../api/email";
 import checkIcon from "../assets/signup-check.svg";
 
 const Page = styled.div`
@@ -260,8 +261,12 @@ export default function Signup() {
   const [message, setMessage] = useState({ text: "", error: false });
   const [loading, setLoading] = useState(false);
   const [emailCode, setEmailCode] = useState("");
-  const [emailCodeVerified] = useState(false);
+  const [emailCodeVerified, setEmailCodeVerified] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [checkingField, setCheckingField] = useState(null);
+  const currentEmailRef = useRef("");
 
   useEffect(() => {
     if (resendSeconds <= 0) return undefined;
@@ -273,24 +278,101 @@ export default function Signup() {
     return () => window.clearInterval(timer);
   }, [resendSeconds]);
 
-  const resendVerificationCode = () => {
-    if (resendSeconds > 0) return;
-    setResendSeconds(60);
+  const sendVerificationCode = async (email = values.email.trim()) => {
+    if (resendSeconds > 0 || sendingCode) return;
+    const requestedEmail = email.trim();
+    if (!requestedEmail) {
+      setMessage({ text: "이메일을 먼저 입력해주세요.", error: true });
+      return false;
+    }
+
+    setSendingCode(true);
+    setMessage({ text: "", error: false });
+    try {
+      const result = await sendEmailCode(requestedEmail);
+      if (currentEmailRef.current.trim() !== requestedEmail) return false;
+      setResendSeconds(60);
+      setEmailCodeVerified(false);
+      setMessage({
+        text: result?.message || "인증번호를 전송했습니다.",
+        error: false,
+      });
+      return true;
+    } catch (error) {
+      setMessage({ text: error.message, error: true });
+      return false;
+    } finally {
+      setSendingCode(false);
+    }
   };
   const changeValue = (field, value) => {
     setValues((prev) => ({ ...prev, [field]: value }));
     setVerified((prev) => ({ ...prev, [field]: false }));
+    if (field === "email") {
+      currentEmailRef.current = value;
+      setEmailCodeVerified(false);
+      setEmailCode("");
+    }
+  };
+  const verifyCode = async () => {
+    if (!values.email.trim() || !emailCode.trim() || verifyingCode) {
+      setMessage({
+        text: "이메일과 인증번호를 모두 입력해주세요.",
+        error: true,
+      });
+      return;
+    }
+
+    const requestedEmail = values.email.trim();
+    setVerifyingCode(true);
+    setMessage({ text: "", error: false });
+    try {
+      const result = await verifyEmailCode(requestedEmail, emailCode.trim());
+      if (currentEmailRef.current.trim() !== requestedEmail) return;
+      const success = result?.data?.emailVerified === true;
+      setEmailCodeVerified(success);
+      setMessage({
+        text: success
+          ? result?.message || "이메일 인증이 완료되었습니다."
+          : "인증번호가 올바르지 않습니다.",
+        error: !success,
+      });
+    } catch (error) {
+      setEmailCodeVerified(false);
+      if (error.status === 409) {
+        setEmailCode("");
+        setResendSeconds(0);
+      }
+      setMessage({
+        text:
+          error.message ||
+          (error.status === 409
+            ? "인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요."
+            : "이메일 인증에 실패했습니다."),
+        error: true,
+      });
+    } finally {
+      setVerifyingCode(false);
+    }
   };
   const verify = async (field) => {
+    if (checkingField) return;
+    setCheckingField(field);
     try {
       const available = await checkDuplicate(field, values[field]);
       setVerified((prev) => ({ ...prev, [field]: available }));
+      if (field === "email" && available) {
+        await sendVerificationCode(values.email);
+        return;
+      }
       setMessage({
         text: available ? "사용할 수 있습니다." : "이미 사용 중인 값입니다.",
         error: !available,
       });
     } catch (error) {
       setMessage({ text: error.message, error: true });
+    } finally {
+      setCheckingField(null);
     }
   };
   const toggle = (key, value) =>
@@ -309,6 +391,10 @@ export default function Signup() {
       });
       return;
     }
+    if (!isSocialSignup && !emailCodeVerified) {
+      setMessage({ text: "이메일 인증을 완료해주세요.", error: true });
+      return;
+    }
     setLoading(true);
     setMessage({ text: "", error: false });
     try {
@@ -322,9 +408,17 @@ export default function Signup() {
           allergyFlags: selections.allergyFlags,
         },
       });
-      setMessage({ text: result.message, error: false });
+      setMessage({
+        text: result?.message || "회원가입이 완료되었습니다.",
+        error: false,
+      });
       setTimeout(() => navigate("/", { replace: true }), 700);
     } catch (error) {
+      if (error.status === 409) {
+        setEmailCodeVerified(false);
+        setEmailCode("");
+        setResendSeconds(0);
+      }
       setMessage({ text: error.message, error: true });
     } finally {
       setLoading(false);
@@ -352,8 +446,12 @@ export default function Signup() {
                     required
                   />
                   <VerifyArea>
-                    <Verify type="button" onClick={() => verify(key)}>
-                      중복 확인
+                    <Verify
+                      type="button"
+                      disabled={checkingField === key}
+                      onClick={() => verify(key)}
+                    >
+                      {checkingField === key ? "확인 중" : "중복 확인"}
                     </Verify>
                     {verified[key] && (
                       <Check>
@@ -380,10 +478,10 @@ export default function Signup() {
                       <ResendArea>
                         <ResendButton
                           type="button"
-                          disabled={resendSeconds > 0}
-                          onClick={resendVerificationCode}
+                          disabled={resendSeconds > 0 || sendingCode}
+                          onClick={() => sendVerificationCode()}
                         >
-                          재전송
+                          {sendingCode ? "전송 중" : "재전송"}
                         </ResendButton>
                         <Countdown aria-live="polite">
                           {resendSeconds > 0
@@ -391,8 +489,13 @@ export default function Signup() {
                             : ""}
                         </Countdown>
                       </ResendArea>
-                      <VerificationButton type="button" $secondary>
-                        인증
+                      <VerificationButton
+                        type="button"
+                        $secondary
+                        disabled={verifyingCode}
+                        onClick={verifyCode}
+                      >
+                        {verifyingCode ? "확인 중" : "인증"}
                       </VerificationButton>
                       {emailCodeVerified && (
                         <Check>

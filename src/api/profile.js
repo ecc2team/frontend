@@ -1,9 +1,8 @@
-import { apiUrl, authHeaders } from "./client";
+import { apiUrl, authenticatedFetch } from "./client";
 
 export async function getProfile({ signal } = {}) {
-  const response = await fetch(apiUrl("profile"), {
+  const response = await authenticatedFetch(apiUrl("profile"), {
     method: "GET",
-    headers: authHeaders(),
     signal,
   });
 
