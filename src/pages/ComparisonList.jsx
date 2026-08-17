@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import styled from "@emotion/styled";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import ComparisonProductCard from "../components/ComparisonProductCard";
 import addCircle from "../assets/compare-add.svg";
 import { getComparisonList } from "../api/comparison-list";
+import {
+  getComparisonSelection,
+  saveComparisonSelection,
+} from "../utils/comparisonSelection";
 
 const PAGE_SIZE = 8;
 const MAX_SELECTED_PRODUCTS = 3;
@@ -158,9 +162,10 @@ const PageButton = styled.button`
 `;
 
 function ComparisonList() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [savedCount, setSavedCount] = useState(0);
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedIds, setSelectedIds] = useState(getComparisonSelection);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -180,7 +185,17 @@ function ComparisonList() {
 
         if (!active) return;
 
-        setProducts(data.products.slice(0, MAX_COMPARISON_PRODUCTS));
+        const nextProducts = data.products.slice(0, MAX_COMPARISON_PRODUCTS);
+        const availableIds = new Set(
+          nextProducts.map((item) => item.productId),
+        );
+        const restoredIds = getComparisonSelection().filter((id) =>
+          availableIds.has(id),
+        );
+
+        setProducts(nextProducts);
+        setSelectedIds(restoredIds);
+        saveComparisonSelection(restoredIds);
         setSavedCount(data.savedCount);
       } catch (error) {
         if (!active || error.name === "AbortError") return;
@@ -221,14 +236,20 @@ function ComparisonList() {
   const toggleProduct = (productId) => {
     setSelectedIds((current) => {
       if (current.includes(productId)) {
-        return current.filter((id) => id !== productId);
+        return saveComparisonSelection(
+          current.filter((id) => id !== productId),
+        );
       }
 
       if (current.length >= MAX_SELECTED_PRODUCTS) {
         return current;
       }
 
-      return [...current, productId];
+      const next = saveComparisonSelection([...current, productId]);
+      if (next.length === MAX_SELECTED_PRODUCTS) {
+        queueMicrotask(() => navigate("/compare/products"));
+      }
+      return next;
     });
   };
 
@@ -239,7 +260,9 @@ function ComparisonList() {
 
     setSavedCount((current) => Math.max(0, current - 1));
 
-    setSelectedIds((current) => current.filter((id) => id !== productId));
+    setSelectedIds((current) =>
+      saveComparisonSelection(current.filter((id) => id !== productId)),
+    );
   };
 
   return (
@@ -254,7 +277,11 @@ function ComparisonList() {
             비교함에 담은 상품 <strong>{savedCount}개</strong>
           </Count>
 
-          <CompareButton type="button" disabled={selectedIds.length < 2}>
+          <CompareButton
+            type="button"
+            disabled={selectedIds.length < 2}
+            onClick={() => navigate("/compare/products")}
+          >
             선택한 상품 비교하기
           </CompareButton>
         </Summary>

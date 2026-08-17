@@ -6,6 +6,8 @@ import SectionPage from "./pages/SectionPage";
 import ProductSearchResult from "./pages/ProductSearchResult";
 import ProductDetail from "./pages/ProductDetail";
 import ComparisonList from "./pages/ComparisonList";
+import Profile from "./pages/Profile";
+import ProductComparison from "./pages/ProductComparison";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Records from "./pages/Records";
 
@@ -40,6 +42,22 @@ function App() {
           element={
             <ProtectedRoute>
               <ComparisonList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compare/products"
+          element={
+            <ProtectedRoute>
+              <ProductComparison />
             </ProtectedRoute>
           }
         />

@@ -1,11 +1,7 @@
-const API_BASE_URL = import.meta.env.DEV
-  ? ""
-  : import.meta.env.VITE_API_BASE_URL;
-
-const COMPARISON_LIST_PATH = "/api/v1/comparison-box";
+import { apiUrl, authenticatedFetch } from "./client";
 
 export async function getComparisonList({ signal } = {}) {
-  const response = await fetch(`${API_BASE_URL}${COMPARISON_LIST_PATH}`, {
+  const response = await authenticatedFetch(apiUrl("comparison-box"), {
     method: "GET",
     signal,
   });
