@@ -94,7 +94,7 @@ const Ingredient = styled.button`
   background: transparent;
   color: inherit;
   text-align: left;
-  cursor: pointer;
+  cursor: ${({ disabled }) => (disabled ? "default" : "pointer")};
   &:first-of-type {
     padding-top: 0;
     border-top: 0;
@@ -110,7 +110,7 @@ const Ingredient = styled.button`
     line-height: 1.5;
     overflow-wrap: anywhere;
   }
-  &:hover h3,
+  &:not(:disabled):hover h3,
   &:focus-visible h3 {
     color: #a032be;
   }
@@ -215,7 +215,8 @@ export default function IngredientAnalysis({
                   <Ingredient
                     type="button"
                     key={`${item.code || item.name}-${index}`}
-                    onClick={() => setSelectedCode(item.code || item.name)}
+                    disabled={!item.code}
+                    onClick={() => setSelectedCode(item.code)}
                     aria-label={`${item.name} 상세 정보 보기`}
                   >
                     <Risk>{riskLabel[item.riskLevel] || item.riskLevel}</Risk>
