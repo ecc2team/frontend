@@ -1,9 +1,21 @@
 import { apiUrl } from "./client";
+import { resolveIngredientCode } from "../data/ingredientCodes";
 
 const normalizeIngredientName = (ingredient) =>
   typeof ingredient === "string"
     ? ingredient
     : ingredient?.name || ingredient?.ingredientName || ingredient?.code;
+
+const normalizeIngredientCode = (ingredient) => {
+  if (typeof ingredient === "string") {
+    return resolveIngredientCode(ingredient);
+  }
+
+  return (
+    resolveIngredientCode(ingredient?.code ?? ingredient?.ingredientCode) ??
+    resolveIngredientCode(ingredient?.name ?? ingredient?.ingredientName)
+  );
+};
 
 const normalizeSearchProduct = (product) => ({
   productId: product.productId ?? product.id,
@@ -31,11 +43,17 @@ const normalizeSearchProduct = (product) => ({
 
 const normalizeAnalysisItem = (ingredient) => {
   if (typeof ingredient === "string") {
-    return { name: ingredient, riskLevel: "GENERAL", summary: "" };
+    return {
+      code: normalizeIngredientCode(ingredient),
+      name: ingredient,
+      riskLevel: "GENERAL",
+      summary: "",
+    };
   }
 
   return {
     ...ingredient,
+    code: normalizeIngredientCode(ingredient),
     name:
       ingredient?.name ||
       ingredient?.ingredientName ||

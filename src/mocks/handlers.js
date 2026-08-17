@@ -1,11 +1,18 @@
 import { http, HttpResponse } from "msw";
 import { apiUrl } from "../api/client.js";
 import { products } from "./data/products.js";
+import { ingredients } from "./data/ingredients.js";
 import { profile } from "./data/profile.js";
 import {
   comparisonProducts,
   MAX_COMPARISON_PRODUCTS,
 } from "./data/comparisonProducts.js";
+import { mockUser, mockTokens } from "./data/mockUser.js";
+
+// TODO: Swagger의 실제 endpoint로 변경
+const SIGNUP_PATH = apiUrl("auth/signup");
+const LOGIN_PATH = apiUrl("auth/login");
+const MOCK_EMAIL_CODE = "123456";
 
 const createSearchResult = (product) => ({
   productId: product.productId,
@@ -118,6 +125,162 @@ export const handlers = [
         savedCount: products.length,
         products,
       },
+    });
+  }),
+
+  http.get(apiUrl("users/check-email"), ({ request }) => {
+    const email = new URL(request.url).searchParams.get("email") || "";
+    return HttpResponse.json({
+      status: 200,
+      message: "이메일 중복 확인이 완료되었습니다.",
+      data: { email, isAvailable: email !== mockUser.email },
+    });
+  }),
+
+  http.post(apiUrl("emails/send-code"), async ({ request }) => {
+    const { email } = await request.json();
+    if (!email) {
+      return HttpResponse.json(
+        { status: 400, message: "이메일을 입력해주세요.", data: null },
+        { status: 400 },
+      );
+    }
+    return HttpResponse.json({
+      status: 200,
+      message: "이메일 인증번호가 발송되었습니다.",
+      data: null,
+    });
+  }),
+
+  http.post(apiUrl("emails/verify-code"), async ({ request }) => {
+    const { email, code } = await request.json();
+    const emailVerified = Boolean(email) && code === MOCK_EMAIL_CODE;
+    return HttpResponse.json(
+      {
+        status: emailVerified ? 200 : 400,
+        message: emailVerified
+          ? "이메일 인증에 성공하였습니다."
+          : "인증번호가 올바르지 않습니다.",
+        data: { emailVerified },
+      },
+      { status: emailVerified ? 200 : 400 },
+    );
+  }),
+
+  // 회원가입 Mock
+  http.get(apiUrl("ingredients"), () => {
+    return HttpResponse.json({
+      message: "성분 목록 조회 성공",
+      data: ingredients,
+      status: 200,
+    });
+  }),
+
+  http.get(apiUrl("ingredients/:code"), ({ params }) => {
+    const code = String(params.code).toUpperCase();
+    const ingredient = ingredients.find((item) => item.code === code);
+
+    if (!ingredient) {
+      return HttpResponse.json(
+        {
+          message: "해당 성분 정보를 찾을 수 없습니다.",
+          data: null,
+          status: 404,
+        },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json({
+      message: "성분 상세 정보 조회가 완료되었습니다.",
+      data: {
+        ...ingredient,
+        description: ingredient.summary,
+      },
+      status: 200,
+    });
+  }),
+
+  http.post(SIGNUP_PATH, async ({ request }) => {
+    const body = await request.json();
+
+    const { email, password, nickname, onboarding } = body;
+
+    if (!email || !password || !nickname) {
+      return HttpResponse.json(
+        {
+          status: 400,
+          message: "필수 회원가입 정보가 누락되었습니다.",
+          data: null,
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        status: 201,
+        message: "회원가입이 성공적으로 완료되었습니다.",
+        data: {
+          userId: mockUser.userId,
+          email,
+          nickname,
+          onboarding,
+        },
+      },
+      {
+        status: 201,
+      },
+    );
+  }),
+
+  // 로그인 Mock
+  http.post(LOGIN_PATH, async ({ request }) => {
+    const body = await request.json();
+
+    const { email, password } = body;
+
+    if (email !== mockUser.email || password !== mockUser.password) {
+      return HttpResponse.json(
+        {
+          status: 401,
+          message: "이메일 또는 비밀번호가 올바르지 않습니다.",
+          data: null,
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
+    return HttpResponse.json({
+      status: 200,
+      message: "로그인이 성공적으로 완료되었습니다.",
+      data: {
+        userId: mockUser.userId,
+        accessToken: mockTokens.accessToken,
+      },
+    });
+  }),
+
+  http.post(apiUrl("auth/reissue"), () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "Access Token이 재발급되었습니다.",
+      data: {
+        userId: mockUser.userId,
+        accessToken: `${mockTokens.accessToken}-reissued`,
+      },
+    });
+  }),
+
+  http.post(apiUrl("auth/logout"), () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "로그아웃이 완료되었습니다.",
+      data: null,
     });
   }),
 ];

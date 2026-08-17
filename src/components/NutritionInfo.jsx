@@ -1,4 +1,7 @@
 import styled from "@emotion/styled";
+import caloriesIcon from "../assets/nutrition-calories.svg";
+import sugarIcon from "../assets/nutrition-sugar.svg";
+import sodiumIcon from "../assets/nutrition-sodium.svg";
 
 const Grid = styled.div`
   display: grid;
@@ -30,6 +33,12 @@ const IconPlaceholder = styled.div`
   height: 50px;
   border-radius: 10px;
   background: #f3deff;
+  display: grid;
+  place-items: center;
+  img {
+    width: 32px;
+    height: 32px;
+  }
 `;
 const Text = styled.div`
   min-width: 0;
@@ -51,15 +60,18 @@ export default function NutritionInfo({ nutrition = {} }) {
   const items = [
     {
       label: "칼로리",
+      icon: caloriesIcon,
       value:
         nutrition.calories == null ? "정보 없음" : `${nutrition.calories} kcal`,
     },
     {
       label: "당류",
+      icon: sugarIcon,
       value: nutrition.sugar == null ? "정보 없음" : `${nutrition.sugar} g`,
     },
     {
       label: "나트륨",
+      icon: sodiumIcon,
       value: nutrition.sodium == null ? "정보 없음" : `${nutrition.sodium} mg`,
     },
   ];
@@ -67,7 +79,9 @@ export default function NutritionInfo({ nutrition = {} }) {
     <Grid>
       {items.map((item) => (
         <Card key={item.label}>
-          <IconPlaceholder aria-hidden="true" />
+          <IconPlaceholder aria-hidden="true">
+            <img src={item.icon} alt="" />
+          </IconPlaceholder>
           <Text>
             <strong>{item.value}</strong>
             <span>{item.label}</span>

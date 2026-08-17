@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import styled from "@emotion/styled";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import IngredientAnalysis from "../components/IngredientAnalysis";
 import NutritionInfo from "../components/NutritionInfo";
 import { getProductDetail } from "../api/products";
+import { addConsumptionRecord } from "../api/records";
 import scoreBase from "../assets/score-ring-base.svg";
 import scoreProgress from "../assets/score-ring-progress.svg";
 import scoreInner from "../assets/score-ring-inner.svg";
@@ -79,6 +80,16 @@ const OutlineButton = styled.button`
   font-size: 20px;
   font-weight: 700;
   cursor: pointer;
+`;
+const ProductActions = styled.div`
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+`;
+const RecordButton = styled(OutlineButton)`
+  background: #a032be;
+  color: #fff;
 `;
 const ProductInfo = styled.div`
   min-width: 0;
@@ -234,6 +245,7 @@ const Status = styled.div`
 
 export default function ProductDetail() {
   const { productId } = useParams();
+  const navigate = useNavigate();
   const [state, setState] = useState({
     status: "loading",
     product: null,
@@ -276,6 +288,15 @@ export default function ProductDetail() {
       </Page>
     );
   const product = state.product;
+  const handleRecord = () => {
+    if (!localStorage.getItem("accessToken")) {
+      navigate("/records");
+      return;
+    }
+
+    addConsumptionRecord(product, new Date());
+    navigate("/records");
+  };
   const tags = Array.isArray(product.keyIngredients)
     ? product.keyIngredients.slice(0, 3)
     : [];
@@ -296,7 +317,12 @@ export default function ProductDetail() {
                 <span className="fallback">제품 이미지 없음</span>
               )}
             </ImageBox>
-            <OutlineButton type="button">비교함 담기</OutlineButton>
+            <ProductActions>
+              <OutlineButton type="button">비교함 담기</OutlineButton>
+              <RecordButton type="button" onClick={handleRecord}>
+                기록하기
+              </RecordButton>
+            </ProductActions>
           </ProductVisual>
           <ProductInfo>
             <h1>{product.productName}</h1>
