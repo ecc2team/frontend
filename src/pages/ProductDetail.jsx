@@ -6,6 +6,7 @@ import IngredientAnalysis from "../components/IngredientAnalysis";
 import NutritionInfo from "../components/NutritionInfo";
 import { getProductDetail } from "../api/products";
 import { addConsumptionRecord } from "../api/records";
+import { addToComparisonList } from "../api/comparison-list";
 import scoreBase from "../assets/score-ring-base.svg";
 import scoreProgress from "../assets/score-ring-progress.svg";
 import scoreInner from "../assets/score-ring-inner.svg";
@@ -297,6 +298,15 @@ export default function ProductDetail() {
     addConsumptionRecord(product, new Date());
     navigate("/records");
   };
+  const handleAddToComparison = () => {
+    if (!localStorage.getItem("accessToken")) {
+      navigate("/compare");
+      return;
+    }
+
+    addToComparisonList(product);
+    navigate("/compare");
+  };
   const tags = Array.isArray(product.keyIngredients)
     ? product.keyIngredients.slice(0, 3)
     : [];
@@ -318,7 +328,9 @@ export default function ProductDetail() {
               )}
             </ImageBox>
             <ProductActions>
-              <OutlineButton type="button">비교함 담기</OutlineButton>
+              <OutlineButton type="button" onClick={handleAddToComparison}>
+                비교함 담기
+              </OutlineButton>
               <RecordButton type="button" onClick={handleRecord}>
                 기록하기
               </RecordButton>
@@ -361,7 +373,9 @@ export default function ProductDetail() {
         <Footer>
           <h2>이런 제품은 어때요?</h2>
           <div className="actions">
-            <OutlineButton type="button">비교함 담기</OutlineButton>
+            <OutlineButton type="button" onClick={handleAddToComparison}>
+              비교함 담기
+            </OutlineButton>
             <SearchAgain to="/search">다시 검색하기</SearchAgain>
           </div>
         </Footer>

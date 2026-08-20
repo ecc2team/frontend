@@ -11,7 +11,7 @@ const navItems = [
   ["추천", "/recommendations"],
   ["랭킹", "/ranking"],
   ["비교함", "/compare"],
-  ["공구", "/group-buy"],
+  ["최근 조회 상품", "/recent-products"],
   ["기록", "/records"],
 ];
 

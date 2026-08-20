@@ -203,6 +203,39 @@ export const products = [
   },
 
   {
+    productId: 1025,
+    productName: "밀키스 제로",
+    imageUrl: null,
+    calories: 0,
+    weight: "250ml",
+    grade: 1,
+    warningAdditive: false,
+    keyIngredients: ["수크랄로스", "아세설팜칼륨"],
+    nutrition: {
+      calories: 0,
+      sugar: 0,
+      sodium: 18,
+    },
+    ingredientsAnalysis: {
+      sweeteners: [
+        {
+          code: "SUCRALOSE",
+          name: "수크랄로스",
+          ingredientType: "SWEETENER",
+          riskLevel: "GENERAL",
+          summary: "안심하고 섭취 가능한 인공감미료입니다.",
+        },
+        {
+          code: "ACESULFAME_K",
+          name: "아세설팜칼륨",
+          ingredientType: "SWEETENER",
+          riskLevel: "GENERAL",
+          summary: "안전한 합성 감미료입니다.",
+        },
+      ],
+    },
+  },
+  {
     productId: 2011,
     productName: "저당 초코 단백질바",
 
