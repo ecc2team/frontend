@@ -64,11 +64,10 @@ const ImageBox = styled.div`
     height: 100%;
     max-width: 100%;
     max-height: 100%;
-    padding: 8px;
     display: block;
-    box-sizing: border-box;
     object-fit: contain;
     object-position: center;
+    transform: none;
   }
   .fallback {
     color: #8f8686;
