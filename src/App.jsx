@@ -13,6 +13,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Records from "./pages/Records";
 import OAuthCallback from "./pages/OAuthCallback";
 import RecentProducts from "./pages/RecentProducts";
+import CategoryPage from "./pages/Category";
 
 const routes = [
   ["/categories", "카테고리"],
@@ -46,6 +47,7 @@ function App() {
         />
         <Route path="/search" element={<ProductSearchResult />} />
         <Route path="/products/:productId" element={<ProductDetail />} />
+        <Route path="/categories/*" element={<CategoryPage />} />
         <Route
           path="/recent-products"
           element={
@@ -79,7 +81,12 @@ function App() {
           }
         />
         {routes
-          .filter(([path]) => path !== "/compare" && path !== "/records")
+          .filter(
+            ([path]) =>
+              path !== "/compare" &&
+              path !== "/records" &&
+              !path.startsWith("/categories"),
+          )
           .map(([path, title]) => (
             <Route
               key={path}
