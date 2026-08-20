@@ -8,14 +8,14 @@ import sugarIcon from "../assets/nutrition-sugar.svg";
 import sodiumIcon from "../assets/nutrition-sodium.svg";
 import saturatedFatIcon from "../assets/nutrition-saturated-fat.svg";
 import proteinIcon from "../assets/nutrition-protein.svg";
-import fiberIcon from "../assets/nutrition-fiber.svg";
+import carbohydrateIcon from "../assets/nutrition-carbohydrate.svg";
 
 const NUTRIENT_ICONS = {
   sugar: sugarIcon,
   sodium: sodiumIcon,
   saturatedFat: saturatedFatIcon,
   protein: proteinIcon,
-  fiber: fiberIcon,
+  fiber: carbohydrateIcon,
 };
 
 const Page = styled.div`

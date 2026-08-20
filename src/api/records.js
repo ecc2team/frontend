@@ -14,7 +14,7 @@ const EMPTY_NUTRIENTS = [
     tone: "caution",
   },
   { key: "protein", label: "단백질", percentage: 0, tone: "safe" },
-  { key: "fiber", label: "식이섬유", percentage: 0, tone: "safe" },
+  { key: "fiber", label: "탄수화물", percentage: 0, tone: "safe" },
 ];
 
 const normalizePercentage = (value) =>
