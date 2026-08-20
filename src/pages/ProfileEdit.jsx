@@ -134,6 +134,16 @@ const Choice = styled.button`
   font-weight: ${({ $selected }) => ($selected ? 700 : 400)};
   cursor: pointer;
 `;
+const AdditionalChoice = styled(Choice)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+`;
+const AdditionalInput = styled(Input)`
+  text-align: center;
+`;
 const Options = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -274,21 +284,21 @@ export default function ProfileEdit() {
               성별
               <ChoiceGroup>
                 {genderOptions.map((option) => (
-                  <Choice
-                    key={option.value}
+                <AdditionalChoice
+                  key={option.value}
                     type="button"
                     $selected={additional.gender === option.value}
                     onClick={() => changeAdditional("gender", option.value)}
                   >
                     {option.label}
-                  </Choice>
+                </AdditionalChoice>
                 ))}
               </ChoiceGroup>
             </Field>
             <Field>
               생년월일
-              <Input
-                type="date"
+            <AdditionalInput
+              type="date"
                 value={additional.birthDate}
                 onChange={(event) =>
                   changeAdditional("birthDate", event.target.value)
@@ -297,8 +307,8 @@ export default function ProfileEdit() {
             </Field>
             <Field>
               키 (cm)
-              <Input
-                type="number"
+            <AdditionalInput
+              type="number"
                 min="0"
                 value={additional.height}
                 onChange={(event) =>
@@ -308,8 +318,8 @@ export default function ProfileEdit() {
             </Field>
             <Field>
               체중 (kg)
-              <Input
-                type="number"
+            <AdditionalInput
+              type="number"
                 min="0"
                 value={additional.weight}
                 onChange={(event) =>
@@ -321,8 +331,8 @@ export default function ProfileEdit() {
               활동량
               <ChoiceGroup>
                 {activityOptions.map((option) => (
-                  <Choice
-                    key={option.value}
+                <AdditionalChoice
+                  key={option.value}
                     type="button"
                     $selected={additional.activityLevel === option.value}
                     onClick={() =>
@@ -330,7 +340,7 @@ export default function ProfileEdit() {
                     }
                   >
                     {option.label}
-                  </Choice>
+                </AdditionalChoice>
                 ))}
               </ChoiceGroup>
             </Field>
