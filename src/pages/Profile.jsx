@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import styled from "@emotion/styled";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { getProfile } from "../api/profile";
 import { signupOptions } from "../data/signupOptions";
@@ -232,6 +233,7 @@ function ProfileTag({ code, label, category, onRemove }) {
 }
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [state, setState] = useState({
     status: "loading",
     data: null,
@@ -257,14 +259,7 @@ export default function Profile() {
     return () => controller.abort();
   }, []);
 
-  const beginEdit = () => {
-    setDraft({
-      preferredCategories: [...(state.data.preferredCategories || [])],
-      dislikedIngredients: [...(state.data.dislikedIngredients || [])],
-      allergyFlags: [...(state.data.allergyFlags || [])],
-    });
-    setEditing(true);
-  };
+  const beginEdit = () => navigate("/profile/edit");
   const cancelEdit = () => {
     setDraft(null);
     setEditing(false);

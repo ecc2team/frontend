@@ -1,4 +1,9 @@
-import { apiUrl, deduplicatedGet } from "./client";
+import {
+  apiUrl,
+  authenticatedFetch,
+  deduplicatedGet,
+  readJson,
+} from "./client";
 
 export async function getProfile({ signal } = {}) {
   const response = await deduplicatedGet(apiUrl("profile"), {
@@ -22,4 +27,29 @@ export async function getProfile({ signal } = {}) {
   }
 
   return result.data;
+}
+
+export async function updateProfilePreferences(preferences) {
+  const response = await authenticatedFetch(apiUrl("users/me/preferences"), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      preferredCategories: preferences.preferredCategories,
+      dislikedIngredients: preferences.dislikedIngredients,
+      allergyFlags: preferences.allergyFlags,
+    }),
+  });
+  const result = await readJson(response);
+
+  if (!response.ok) {
+    throw new Error(result?.message || "취향 설정을 저장하지 못했습니다.");
+  }
+
+  if (result?.status !== 200) {
+    throw new Error(
+      result?.message || "취향 설정 저장 응답이 올바르지 않습니다.",
+    );
+  }
+
+  return result;
 }
