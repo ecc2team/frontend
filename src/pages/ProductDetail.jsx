@@ -7,9 +7,6 @@ import NutritionInfo from "../components/NutritionInfo";
 import { getProductDetail } from "../api/products";
 import { addConsumptionRecord } from "../api/records";
 import { addToComparisonList } from "../api/comparison-list";
-import scoreBase from "../assets/score-ring-base.svg";
-import scoreProgress from "../assets/score-ring-progress.svg";
-import scoreInner from "../assets/score-ring-inner.svg";
 
 const Page = styled.div`
   min-height: 100svh;
@@ -65,7 +62,13 @@ const ImageBox = styled.div`
   img {
     width: 100%;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    padding: 8px;
+    display: block;
+    box-sizing: border-box;
     object-fit: contain;
+    object-position: center;
   }
   .fallback {
     color: #8f8686;
@@ -94,6 +97,11 @@ const RecordButton = styled(OutlineButton)`
 `;
 const ProductInfo = styled.div`
   min-width: 0;
+  .view-count {
+    margin: 0 0 7px;
+    color: #8f8686;
+    font-size: 13px;
+  }
   h1 {
     margin: 0 0 12px;
     font-size: 30px;
@@ -105,28 +113,18 @@ const ProductInfo = styled.div`
     font-size: 15px;
   }
 `;
-const Tags = styled.div`
-  display: grid;
-  gap: 16px;
-  width: min(236px, 100%);
-  span {
-    min-height: 33px;
-    padding: 7px 20px;
-    border-radius: 50px;
-    background: #f3deff;
-    color: #6d2281;
-    font-size: 15px;
-    text-align: center;
-    overflow-wrap: anywhere;
-  }
-  span:nth-of-type(2) {
-    background: #d6ffe1;
-    color: #005530;
-  }
-  span:nth-of-type(3) {
-    background: #a89eff;
-    color: #1f0042;
-  }
+const ProductSummary = styled.p`
+  width: min(470px, 100%);
+  min-height: 33px;
+  margin: 0;
+  padding: 9px 18px;
+  border-radius: 18px;
+  background: #f3deff;
+  color: #6d2281;
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
 `;
 const ScoreCard = styled.div`
   width: 329px;
@@ -154,16 +152,26 @@ const Ring = styled.div`
   margin-top: 8px;
   margin-right: auto;
   margin-left: auto;
-  img {
+  svg {
     position: absolute;
     inset: 0;
     width: 169px;
     height: 167px;
   }
-  img:last-of-type {
-    width: 150px;
-    height: 148px;
-    inset: 10px 9px;
+  .track,
+  .progress {
+    fill: none;
+    stroke-width: 10;
+  }
+  .track {
+    stroke: #e8ddf4;
+  }
+  .progress {
+    stroke: #a032be;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dasharray 0.35s ease;
   }
   .value {
     position: absolute;
@@ -307,9 +315,7 @@ export default function ProductDetail() {
     addToComparisonList(product);
     navigate("/compare");
   };
-  const tags = Array.isArray(product.keyIngredients)
-    ? product.keyIngredients.slice(0, 3)
-    : [];
+  const productSummary = product.summary || "주요 성분 정보 없음";
   return (
     <Page>
       <Header />
@@ -337,24 +343,28 @@ export default function ProductDetail() {
             </ProductActions>
           </ProductVisual>
           <ProductInfo>
+            <p className="view-count">조회수: {product.viewCount}번</p>
             <h1>{product.productName}</h1>
             <p className="id">제품 ID {product.productId}</p>
-            <Tags>
-              {tags.map((tag) => (
-                <span key={tag}>{tag}</span>
-              ))}
-              {tags.length === 0 && <span>주요 성분 정보 없음</span>}
-            </Tags>
+            <ProductSummary>{productSummary}</ProductSummary>
           </ProductInfo>
           <ScoreCard className="score">
             <ScoreLabel>ZeroPick 점수</ScoreLabel>
             <Ring>
-              <img src={scoreBase} alt="" />
-              <img src={scoreProgress} alt="" />
-              <img src={scoreInner} alt="" />
+              <svg viewBox="0 0 169 167" aria-hidden="true">
+                <circle className="track" cx="84.5" cy="83.5" r="74" />
+                <circle
+                  className="progress"
+                  cx="84.5"
+                  cy="83.5"
+                  r="74"
+                  pathLength="100"
+                  strokeDasharray={`${product.score} 100`}
+                />
+              </svg>
               <div className="value">
-                {product.grade}
-                <span>등급</span>
+                {product.score}
+                <span>점</span>
               </div>
             </Ring>
           </ScoreCard>

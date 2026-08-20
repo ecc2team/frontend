@@ -2,6 +2,10 @@ export const products = [
   {
     productId: 1023,
     productName: "코카콜라 제로",
+    score: 54,
+    viewCount: 12,
+    summary:
+      "특별한 감미료 이슈 없이 무난하게 구성되어 있어, 일반적인 수준의 제로 상품입니다.",
 
     // 검색 결과 화면용 임시 필드
     imageUrl: "/images/products/coca-cola-zero.png",
