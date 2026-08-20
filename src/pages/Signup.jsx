@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import PreferenceRow from "../components/PreferenceRow";
 import SocialLoginButton from "../components/SocialLoginButton";
 import PasswordInput from "../components/PasswordInput";
+import AdditionalSignupInfo from "../components/AdditionalSignupInfo";
 import { signupOptions } from "../data/signupOptions";
 import { checkDuplicate, signup } from "../services/signupApi";
 import { sendEmailCode, verifyEmailCode } from "../api/email";
@@ -538,6 +539,8 @@ export default function Signup() {
               </Fragment>
             ))}
           </Info>
+          <Divider />
+          <AdditionalSignupInfo />
           <Divider />
           <SectionTitle>취향 설정</SectionTitle>
           <Preferences>
