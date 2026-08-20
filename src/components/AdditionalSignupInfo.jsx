@@ -7,8 +7,12 @@ const Section = styled.section`
 `;
 
 const Title = styled.h2`
-  margin: 0 0 14px;
+  margin: 0 0 14px -36px;
   font-size: 22px;
+
+  @media (max-width: 800px) {
+    margin-left: 0;
+  }
 `;
 
 const Fields = styled.div`
