@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Onboarding from "./pages/Onboarding";
 import SectionPage from "./pages/SectionPage";
 import ProductSearchResult from "./pages/ProductSearchResult";
 import ProductDetail from "./pages/ProductDetail";
@@ -34,6 +35,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route
           path="/oauth/kakao/callback"
           element={<OAuthCallback provider="kakao" />}
