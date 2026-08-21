@@ -1,4 +1,25 @@
-import { apiUrl, deduplicatedGet, readJson } from "./client";
+import {
+  apiUrl,
+  authenticatedFetch,
+  deduplicatedGet,
+  readJson,
+} from "./client";
+
+const recentProductRecordRequests = new Map();
+
+const requireAccessToken = () => {
+  if (localStorage.getItem("accessToken")) return;
+
+  const error = new Error("로그인이 필요한 서비스입니다.");
+  error.status = 401;
+  throw error;
+};
+
+const throwRequestError = (response, result, fallbackMessage) => {
+  const error = new Error(result?.message || fallbackMessage);
+  error.status = response.status;
+  throw error;
+};
 
 const normalizeRecentProduct = (product) => ({
   productId: product.productId,
@@ -9,14 +30,19 @@ const normalizeRecentProduct = (product) => ({
 });
 
 export async function getRecentProducts({ signal } = {}) {
-  const response = await deduplicatedGet(apiUrl("products/recent"), {
+  requireAccessToken();
+  const response = await deduplicatedGet(apiUrl("users/me/recent-products"), {
     authenticated: true,
     signal,
   });
   const result = await readJson(response);
 
   if (!response.ok) {
-    throw new Error(result?.message || "최근 조회 상품을 불러오지 못했습니다.");
+    throwRequestError(
+      response,
+      result,
+      "최근 조회 상품을 불러오지 못했습니다.",
+    );
   }
 
   if (!result?.data || !Array.isArray(result.data.content)) {
@@ -34,4 +60,54 @@ export async function getRecentProducts({ signal } = {}) {
     totalElements: Number(result.data.totalElements) || content.length,
     content,
   };
+}
+
+export function recordRecentProduct(productId) {
+  requireAccessToken();
+  const requestKey = String(productId);
+  const pendingRequest = recentProductRecordRequests.get(requestKey);
+  if (pendingRequest) return pendingRequest;
+
+  const request = authenticatedFetch(
+    apiUrl(`users/me/recent-products/${encodeURIComponent(productId)}`),
+    { method: "POST" },
+  )
+    .then(async (response) => {
+      const result = await readJson(response);
+      if (!response.ok) {
+        throwRequestError(
+          response,
+          result,
+          "최근 조회 기록을 저장하지 못했습니다.",
+        );
+      }
+      return result;
+    })
+    .finally(() => {
+      if (recentProductRecordRequests.get(requestKey) === request) {
+        recentProductRecordRequests.delete(requestKey);
+      }
+    });
+
+  recentProductRecordRequests.set(requestKey, request);
+  return request;
+}
+
+export async function deleteRecentProduct(productId) {
+  requireAccessToken();
+  const response = await authenticatedFetch(
+    apiUrl(`users/me/recent-products/${encodeURIComponent(productId)}`),
+    { method: "DELETE" },
+  );
+  const result = await readJson(response);
+
+  if (!response.ok) {
+    throwRequestError(
+      response,
+      result,
+      "최근 조회 상품을 삭제하지 못했습니다.",
+    );
+  }
+
+  return result;
 }

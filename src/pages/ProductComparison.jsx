@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "@emotion/styled";
 import { Link, Navigate } from "react-router-dom";
 import Header from "../components/Header";
-import { getComparisonList } from "../api/comparison-list";
+import {
+  getComparisonList,
+  removeFromComparisonList,
+} from "../api/comparison-list";
 import {
   getComparisonSelection,
   saveComparisonSelection,
@@ -233,11 +236,16 @@ export default function ProductComparison() {
     [products],
   );
 
-  const removeProduct = (productId) => {
-    const next = saveComparisonSelection(
-      selectedIds.filter((id) => id !== productId),
-    );
-    setSelectedIds(next);
+  const removeProduct = async (productId) => {
+    try {
+      await removeFromComparisonList(productId);
+      const next = saveComparisonSelection(
+        selectedIds.filter((id) => id !== productId),
+      );
+      setSelectedIds(next);
+    } catch (error) {
+      setState((current) => ({ ...current, error: error.message }));
+    }
   };
 
   if (selectedIds.length < 2) return <Navigate to="/compare" replace />;
@@ -264,6 +272,7 @@ export default function ProductComparison() {
     <Page>
       <Header />
       <Main>
+        {state.error && <div role="alert">{state.error}</div>}
         <Heading>
           <div>
             <h1>제품 비교 ({products.length}개)</h1>

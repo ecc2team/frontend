@@ -64,7 +64,7 @@ const createProductDetail = (product) => ({
 });
 
 export const handlers = [
-  http.get(apiUrl("products/recent"), () => {
+  http.get(apiUrl("users/me/recent-products"), () => {
     return HttpResponse.json({
       status: 200,
       message: "최근 본 상품 목록 조회가 완료되었습니다.",
@@ -73,6 +73,37 @@ export const handlers = [
         content: recentProducts,
       },
     });
+  }),
+
+  http.post(apiUrl("users/me/recent-products/:productId"), ({ params }) => {
+    const productId = Number(params.productId);
+    const product = products.find((item) => item.productId === productId);
+
+    if (product) {
+      const existingIndex = recentProducts.findIndex(
+        (item) => item.productId === productId,
+      );
+      if (existingIndex >= 0) recentProducts.splice(existingIndex, 1);
+      recentProducts.unshift({
+        productId,
+        productName: product.productName,
+        dietaryTags: [],
+        riskLevel: product.warningAdditive ? "CAUTION" : "SAFE",
+        viewedAt: new Date().toISOString(),
+      });
+    }
+
+    return HttpResponse.json({ status: 200, message: "최근 조회 기록 저장 완료" });
+  }),
+
+  http.delete(apiUrl("users/me/recent-products/:productId"), ({ params }) => {
+    const productId = Number(params.productId);
+    const index = recentProducts.findIndex(
+      (item) => item.productId === productId,
+    );
+    if (index >= 0) recentProducts.splice(index, 1);
+
+    return HttpResponse.json({ status: 200, message: "최근 조회 상품 삭제 완료" });
   }),
 
   // 제품 검색
@@ -160,6 +191,33 @@ export const handlers = [
         products,
       },
     });
+  }),
+
+  http.post(apiUrl("comparison-box/toggle"), async ({ request }) => {
+    const { productId: rawProductId } = await request.json();
+    const productId = Number(rawProductId);
+    const existingIndex = comparisonProducts.findIndex(
+      (item) => item.productId === productId,
+    );
+
+    if (existingIndex >= 0) {
+      comparisonProducts.splice(existingIndex, 1);
+    } else if (comparisonProducts.length < MAX_COMPARISON_PRODUCTS) {
+      const product = products.find((item) => item.productId === productId);
+      if (product) comparisonProducts.push(product);
+    }
+
+    return HttpResponse.json({ status: 200, message: "비교함 변경 완료" });
+  }),
+
+  http.delete(apiUrl("comparison-box/products/:productId"), ({ params }) => {
+    const productId = Number(params.productId);
+    const index = comparisonProducts.findIndex(
+      (item) => item.productId === productId,
+    );
+    if (index >= 0) comparisonProducts.splice(index, 1);
+
+    return HttpResponse.json({ status: 200, message: "비교함 상품 삭제 완료" });
   }),
 
   http.get(apiUrl("users/check-email"), ({ request }) => {

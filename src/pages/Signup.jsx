@@ -53,7 +53,10 @@ const Info = styled.div`
 `;
 const Field = styled.div`
   display: grid;
-  grid-template-columns: 155px minmax(0, 602px) 145px;
+  grid-template-columns: ${({ $withoutAction }) =>
+    $withoutAction
+      ? "155px minmax(0, 602px)"
+      : "155px minmax(0, 602px) 145px"};
   align-items: center;
   gap: 27px;
   @media (max-width: 760px) {
@@ -397,7 +400,9 @@ export default function Signup({ onboarding = false }) {
     event.preventDefault();
     if (
       !isSocialOnboarding &&
-      !visibleFields.every(({ key }) => verified[key])
+      !visibleFields
+        .filter(({ key }) => key !== "password")
+        .every(({ key }) => verified[key])
     ) {
       setMessage({
         text: "기본 정보의 중복 확인을 모두 완료해주세요.",
@@ -454,7 +459,7 @@ export default function Signup({ onboarding = false }) {
           <Info>
             {visibleFields.map(({ key, label, type, placeholder }) => (
               <Fragment key={key}>
-                <Field>
+                <Field $withoutAction={key === "password"}>
                   <FieldLabel htmlFor={key}>{label}</FieldLabel>
                   {key === "password" ? (
                     <PasswordInput
@@ -476,24 +481,25 @@ export default function Signup({ onboarding = false }) {
                       required={!isSocialOnboarding}
                     />
                   )}
-                  {isSocialOnboarding ? (
-                    <span />
-                  ) : (
-                    <VerifyArea>
-                      <Verify
-                        type="button"
-                        disabled={checkingField === key}
-                        onClick={() => verify(key)}
-                      >
-                        {checkingField === key ? "확인 중" : "중복 확인"}
-                      </Verify>
-                      {verified[key] && (
-                        <Check>
-                          <img src={checkIcon} alt="사용 가능" />
-                        </Check>
-                      )}
-                    </VerifyArea>
-                  )}
+                  {key !== "password" &&
+                    (isSocialOnboarding ? (
+                      <span />
+                    ) : (
+                      <VerifyArea>
+                        <Verify
+                          type="button"
+                          disabled={checkingField === key}
+                          onClick={() => verify(key)}
+                        >
+                          {checkingField === key ? "확인 중" : "중복 확인"}
+                        </Verify>
+                        {verified[key] && (
+                          <Check>
+                            <img src={checkIcon} alt="사용 가능" />
+                          </Check>
+                        )}
+                      </VerifyArea>
+                    ))}
                 </Field>
                 {key === "email" && !isSocialOnboarding && !onboarding && (
                   <VerificationCodeRow>

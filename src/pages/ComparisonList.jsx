@@ -7,7 +7,7 @@ import addCircle from "../assets/compare-add.svg";
 import {
   getComparisonList,
   MAX_COMPARISON_PRODUCTS,
-  removeFromLocalComparisonList,
+  removeFromComparisonList,
 } from "../api/comparison-list";
 import {
   getComparisonSelection,
@@ -172,6 +172,7 @@ function ComparisonList() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -256,17 +257,20 @@ function ComparisonList() {
     });
   };
 
-  const removeProduct = (productId) => {
-    removeFromLocalComparisonList(productId);
-    setProducts((current) =>
-      current.filter((product) => product.productId !== productId),
-    );
-
-    setSavedCount((current) => Math.max(0, current - 1));
-
-    setSelectedIds((current) =>
-      saveComparisonSelection(current.filter((id) => id !== productId)),
-    );
+  const removeProduct = async (productId) => {
+    setActionError("");
+    try {
+      await removeFromComparisonList(productId);
+      setProducts((current) =>
+        current.filter((product) => product.productId !== productId),
+      );
+      setSavedCount((current) => Math.max(0, current - 1));
+      setSelectedIds((current) =>
+        saveComparisonSelection(current.filter((id) => id !== productId)),
+      );
+    } catch (error) {
+      setActionError(error.message);
+    }
   };
 
   return (
@@ -293,6 +297,10 @@ function ComparisonList() {
         {loading && <div>비교함을 불러오고 있습니다...</div>}
 
         {!loading && error && <div>{error}</div>}
+
+        {!loading && !error && actionError && (
+          <div role="alert">{actionError}</div>
+        )}
 
         {!loading && !error && (
           <>

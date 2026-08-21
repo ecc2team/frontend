@@ -7,6 +7,7 @@ import NutritionInfo from "../components/NutritionInfo";
 import { getProductDetail } from "../api/products";
 import { addConsumptionRecord } from "../api/records";
 import { addToComparisonList } from "../api/comparison-list";
+import { recordRecentProduct } from "../api/recent-products";
 
 const Page = styled.div`
   min-height: 100svh;
@@ -111,6 +112,12 @@ const ProductInfo = styled.div`
     color: #5c5454;
     font-size: 15px;
   }
+`;
+const ActionError = styled.p`
+  margin: 0;
+  color: #c62828;
+  font-size: 13px;
+  text-align: center;
 `;
 const ProductSummary = styled.p`
   width: min(470px, 100%);
@@ -261,12 +268,21 @@ export default function ProductDetail() {
   });
   const [expanded, setExpanded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [actionError, setActionError] = useState("");
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
     getProductDetail(productId, { signal: controller.signal })
       .then((product) => {
-        if (active) setState({ status: "success", product, error: "" });
+        if (!active) return;
+        setActionError("");
+        setState({ status: "success", product, error: "" });
+
+        if (localStorage.getItem("accessToken")) {
+          recordRecentProduct(product.productId).catch((error) => {
+            if (active) setActionError(error.message);
+          });
+        }
       })
       .catch((error) => {
         if (active && error.name !== "AbortError")
@@ -305,14 +321,19 @@ export default function ProductDetail() {
     addConsumptionRecord(product, new Date());
     navigate("/records");
   };
-  const handleAddToComparison = () => {
+  const handleAddToComparison = async () => {
     if (!localStorage.getItem("accessToken")) {
       navigate("/compare");
       return;
     }
 
-    addToComparisonList(product);
-    navigate("/compare");
+    setActionError("");
+    try {
+      await addToComparisonList(product);
+      navigate("/compare");
+    } catch (error) {
+      setActionError(error.message);
+    }
   };
   const productSummary = product.summary || "주요 성분 정보 없음";
   return (
@@ -340,6 +361,7 @@ export default function ProductDetail() {
                 기록하기
               </RecordButton>
             </ProductActions>
+            {actionError && <ActionError role="status">{actionError}</ActionError>}
           </ProductVisual>
           <ProductInfo>
             <p className="view-count">조회수: {product.viewCount}번</p>

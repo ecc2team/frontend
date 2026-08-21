@@ -1,17 +1,24 @@
-import { apiUrl, deduplicatedGet } from "./client";
+import {
+  apiUrl,
+  authenticatedFetch,
+  deduplicatedGet,
+  readJson,
+} from "./client";
 
 export const MAX_COMPARISON_PRODUCTS = 50;
 
-const getStorageKey = () =>
-  `zeropick:comparison-products:${localStorage.getItem("userId") || "current"}`;
+const requireAccessToken = () => {
+  if (localStorage.getItem("accessToken")) return;
 
-const readLocalComparisonProducts = () => {
-  try {
-    const products = JSON.parse(localStorage.getItem(getStorageKey()) || "[]");
-    return Array.isArray(products) ? products : [];
-  } catch {
-    return [];
-  }
+  const error = new Error("로그인이 필요한 서비스입니다.");
+  error.status = 401;
+  throw error;
+};
+
+const throwRequestError = (response, result, fallbackMessage) => {
+  const error = new Error(result?.message || fallbackMessage);
+  error.status = response.status;
+  throw error;
 };
 
 const normalizeComparisonProduct = (product) => ({
@@ -31,32 +38,39 @@ const normalizeComparisonProduct = (product) => ({
     : [],
 });
 
-export function addToComparisonList(product) {
-  const products = readLocalComparisonProducts();
-  const productId = product.productId;
+export async function addToComparisonList(product) {
+  requireAccessToken();
+  const response = await authenticatedFetch(apiUrl("comparison-box/toggle"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ productId: product.productId }),
+  });
+  const result = await readJson(response);
 
-  if (products.some((item) => item.productId === productId)) {
-    return { status: "duplicate", products };
+  if (!response.ok) {
+    throwRequestError(response, result, "비교함을 변경하지 못했습니다.");
   }
 
-  if (products.length >= MAX_COMPARISON_PRODUCTS) {
-    return { status: "full", products };
-  }
-
-  const nextProducts = [...products, normalizeComparisonProduct(product)];
-  localStorage.setItem(getStorageKey(), JSON.stringify(nextProducts));
-  return { status: "added", products: nextProducts };
+  return result;
 }
 
-export function removeFromLocalComparisonList(productId) {
-  const products = readLocalComparisonProducts();
-  localStorage.setItem(
-    getStorageKey(),
-    JSON.stringify(products.filter((item) => item.productId !== productId)),
+export async function removeFromComparisonList(productId) {
+  requireAccessToken();
+  const response = await authenticatedFetch(
+    apiUrl(`comparison-box/products/${encodeURIComponent(productId)}`),
+    { method: "DELETE" },
   );
+  const result = await readJson(response);
+
+  if (!response.ok) {
+    throwRequestError(response, result, "비교함 상품을 삭제하지 못했습니다.");
+  }
+
+  return result;
 }
 
 export async function getComparisonList({ signal } = {}) {
+  requireAccessToken();
   const response = await deduplicatedGet(apiUrl("comparison-box"), {
     authenticated: true,
     signal,
@@ -71,7 +85,11 @@ export async function getComparisonList({ signal } = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(result?.message || "비교함 목록을 불러오지 못했습니다.");
+    throwRequestError(
+      response,
+      result,
+      "비교함 목록을 불러오지 못했습니다.",
+    );
   }
 
   if (
@@ -82,16 +100,9 @@ export async function getComparisonList({ signal } = {}) {
     throw new Error("비교함 목록 응답 형식이 올바르지 않습니다.");
   }
 
-  const mergedProducts = new Map(
-    result.data.products.map((product) => [product.productId, product]),
-  );
-  readLocalComparisonProducts().forEach((product) => {
-    mergedProducts.set(product.productId, product);
-  });
-  const products = [...mergedProducts.values()].slice(
-    0,
-    MAX_COMPARISON_PRODUCTS,
-  );
+  const products = result.data.products
+    .map(normalizeComparisonProduct)
+    .slice(0, MAX_COMPARISON_PRODUCTS);
 
   return {
     ...result.data,
