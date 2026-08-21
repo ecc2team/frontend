@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import PreferenceRow from "../components/PreferenceRow";
 import SocialLoginButton from "../components/SocialLoginButton";
 import PasswordInput from "../components/PasswordInput";
+import AdditionalSignupInfo from "../components/AdditionalSignupInfo";
 import { signupOptions } from "../data/signupOptions";
 import { checkDuplicate, signup } from "../services/signupApi";
 import { sendEmailCode, verifyEmailCode } from "../api/email";
@@ -52,7 +53,10 @@ const Info = styled.div`
 `;
 const Field = styled.div`
   display: grid;
-  grid-template-columns: 155px minmax(0, 602px) 145px;
+  grid-template-columns: ${({ $withoutAction }) =>
+    $withoutAction
+      ? "155px minmax(0, 602px)"
+      : "155px minmax(0, 602px) 145px"};
   align-items: center;
   gap: 27px;
   @media (max-width: 760px) {
@@ -247,14 +251,16 @@ const fields = [
   },
 ];
 
-export default function Signup() {
+export default function Signup({ onboarding = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const socialOnboarding = location.state?.socialOnboarding;
   const isSocialOnboarding = Boolean(socialOnboarding);
-  const visibleFields = isSocialOnboarding
-    ? fields.filter(({ key }) => key !== "password")
-    : fields;
+  const visibleFields = fields.filter(({ key }) => {
+    if (onboarding) return key !== "email";
+    if (isSocialOnboarding) return key !== "password";
+    return true;
+  });
   const [values, setValues] = useState({
     email: socialOnboarding?.email ?? "",
     password: "",
@@ -394,7 +400,9 @@ export default function Signup() {
     event.preventDefault();
     if (
       !isSocialOnboarding &&
-      !visibleFields.every(({ key }) => verified[key])
+      !visibleFields
+        .filter(({ key }) => key !== "password")
+        .every(({ key }) => verified[key])
     ) {
       setMessage({
         text: "기본 정보의 중복 확인을 모두 완료해주세요.",
@@ -402,33 +410,35 @@ export default function Signup() {
       });
       return;
     }
-    if (!isSocialOnboarding && !emailCodeVerified) {
+    if (!onboarding && !isSocialOnboarding && !emailCodeVerified) {
       setMessage({ text: "이메일 인증을 완료해주세요.", error: true });
       return;
     }
     setLoading(true);
     setMessage({ text: "", error: false });
     try {
-      const onboarding = {
+      const onboardingData = {
         preferredCategories: selections.preferredCategories,
         dislikedIngredients: selections.dislikedIngredients,
         allergyFlags: selections.allergyFlags,
       };
-      const result = isSocialOnboarding
-        ? await submitSocialOnboarding(onboarding)
+      const result = onboarding || isSocialOnboarding
+        ? await submitSocialOnboarding(onboardingData)
         : await signup({
             email: values.email,
             password: values.password,
             nickname: values.nickname,
-            onboarding,
+            onboarding: onboardingData,
           });
       setMessage({
-        text: result?.message || "회원가입이 완료되었습니다.",
+        text:
+          result?.message ||
+          "회원가입이 완료되었습니다.",
         error: false,
       });
       setTimeout(() => navigate("/", { replace: true }), 700);
     } catch (error) {
-      if (!isSocialOnboarding && error.status === 409) {
+      if (!onboarding && !isSocialOnboarding && error.status === 409) {
         setEmailCodeVerified(false);
         setEmailCode("");
         setResendSeconds(0);
@@ -449,7 +459,7 @@ export default function Signup() {
           <Info>
             {visibleFields.map(({ key, label, type, placeholder }) => (
               <Fragment key={key}>
-                <Field>
+                <Field $withoutAction={key === "password"}>
                   <FieldLabel htmlFor={key}>{label}</FieldLabel>
                   {key === "password" ? (
                     <PasswordInput
@@ -471,26 +481,27 @@ export default function Signup() {
                       required={!isSocialOnboarding}
                     />
                   )}
-                  {isSocialOnboarding ? (
-                    <span />
-                  ) : (
-                    <VerifyArea>
-                      <Verify
-                        type="button"
-                        disabled={checkingField === key}
-                        onClick={() => verify(key)}
-                      >
-                        {checkingField === key ? "확인 중" : "중복 확인"}
-                      </Verify>
-                      {verified[key] && (
-                        <Check>
-                          <img src={checkIcon} alt="사용 가능" />
-                        </Check>
-                      )}
-                    </VerifyArea>
-                  )}
+                  {key !== "password" &&
+                    (isSocialOnboarding ? (
+                      <span />
+                    ) : (
+                      <VerifyArea>
+                        <Verify
+                          type="button"
+                          disabled={checkingField === key}
+                          onClick={() => verify(key)}
+                        >
+                          {checkingField === key ? "확인 중" : "중복 확인"}
+                        </Verify>
+                        {verified[key] && (
+                          <Check>
+                            <img src={checkIcon} alt="사용 가능" />
+                          </Check>
+                        )}
+                      </VerifyArea>
+                    ))}
                 </Field>
-                {key === "email" && !isSocialOnboarding && (
+                {key === "email" && !isSocialOnboarding && !onboarding && (
                   <VerificationCodeRow>
                     <VerificationCodeLabel htmlFor="email-verification-code">
                       인증 번호
@@ -539,6 +550,8 @@ export default function Signup() {
             ))}
           </Info>
           <Divider />
+          <AdditionalSignupInfo />
+          <Divider />
           <SectionTitle>취향 설정</SectionTitle>
           <Preferences>
             {signupOptions.map((group) => (
@@ -558,7 +571,7 @@ export default function Signup() {
               {message.text}
             </Message>
           )}
-          {!isSocialOnboarding && (
+          {!onboarding && !isSocialOnboarding && (
             <>
               <SocialDivider />
               <SocialGuide>소셜 계정으로 회원가입</SocialGuide>

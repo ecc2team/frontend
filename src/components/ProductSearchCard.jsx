@@ -99,9 +99,19 @@ const Allergy = styled.p`
 
 export default function ProductSearchCard({ product }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const calories =
-    product.calories == null ? "칼로리 정보 없음" : `${product.calories} kcal`;
-  const weight = product.weight || "함량 정보 없음";
+  const meta =
+    product.score != null
+      ? [
+          product.calories != null ? `${product.calories} kcal` : null,
+          product.sugar != null ? `당류 ${product.sugar} g` : null,
+          product.viewCount != null ? `조회 ${product.viewCount}` : null,
+        ].filter(Boolean)
+      : [
+          product.calories == null
+            ? "칼로리 정보 없음"
+            : `${product.calories} kcal`,
+          product.weight || "함량 정보 없음",
+        ];
   return (
     <Card
       to={`/products/${encodeURIComponent(product.productId)}`}
@@ -119,10 +129,11 @@ export default function ProductSearchCard({ product }) {
         )}
       </ImageBox>
       <Name>{product.productName}</Name>
-      <Meta>
-        {calories} · {weight}
-      </Meta>
-      <Grade>{product.grade}등급</Grade>
+      {meta.length > 0 && <Meta>{meta.join(" · ")}</Meta>}
+      <Grade>
+        {product.rank != null && `${product.rank}위 · `}
+        {product.score}점
+      </Grade>
       <Ingredients>
         {Array.isArray(product.keyIngredients) &&
           product.keyIngredients.map((ingredient) => (

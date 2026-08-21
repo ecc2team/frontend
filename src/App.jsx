@@ -1,17 +1,20 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Onboarding from "./pages/Onboarding";
 import SectionPage from "./pages/SectionPage";
 import ProductSearchResult from "./pages/ProductSearchResult";
 import ProductDetail from "./pages/ProductDetail";
 import ComparisonList from "./pages/ComparisonList";
 import Profile from "./pages/Profile";
+import ProfileEdit from "./pages/ProfileEdit";
 import ProductComparison from "./pages/ProductComparison";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Records from "./pages/Records";
 import OAuthCallback from "./pages/OAuthCallback";
 import RecentProducts from "./pages/RecentProducts";
+import CategoryPage from "./pages/Category";
 
 const routes = [
   ["/categories", "카테고리"],
@@ -29,11 +32,12 @@ const routes = [
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/onboarding" element={<Onboarding />} />
         <Route
           path="/oauth/kakao/callback"
           element={<OAuthCallback provider="kakao" />}
@@ -44,6 +48,7 @@ function App() {
         />
         <Route path="/search" element={<ProductSearchResult />} />
         <Route path="/products/:productId" element={<ProductDetail />} />
+        <Route path="/categories/*" element={<CategoryPage />} />
         <Route
           path="/recent-products"
           element={
@@ -69,6 +74,14 @@ function App() {
           }
         />
         <Route
+          path="/profile/edit"
+          element={
+            <ProtectedRoute>
+              <ProfileEdit />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/compare/products"
           element={
             <ProtectedRoute>
@@ -77,7 +90,12 @@ function App() {
           }
         />
         {routes
-          .filter(([path]) => path !== "/compare" && path !== "/records")
+          .filter(
+            ([path]) =>
+              path !== "/compare" &&
+              path !== "/records" &&
+              !path.startsWith("/categories"),
+          )
           .map(([path, title]) => (
             <Route
               key={path}
@@ -95,7 +113,7 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

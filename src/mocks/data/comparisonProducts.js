@@ -1,14 +1,17 @@
 export const MAX_COMPARISON_PRODUCTS = 50;
 
+const publicAssetUrl = (path) =>
+  `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+
 export const comparisonProducts = [
   {
     productId: 1023,
     productName: "코카콜라 제로",
-    imageUrl: "/images/products/coca-cola-zero.png",
+    imageUrl: publicAssetUrl("images/products/coca-cola-zero.png"),
     calories: 0,
     weight: "355ml",
     grade: 2,
-    nutrition: { calories: 0, sugar: 0, sodium: 15, caffeine: 34 },
+    nutrition: { calories: 0, sugar: 0, sodium: 15 },
     allergicIngredients: [],
     warningAdditive: true,
     keyIngredients: ["수크랄로스", "아세설팜칼륨"],
@@ -16,11 +19,11 @@ export const comparisonProducts = [
   {
     productId: 1024,
     productName: "칠성사이다 제로",
-    imageUrl: "/images/products/chilsung-cider-zero.png",
+    imageUrl: publicAssetUrl("images/products/chilsung-cider-zero.png"),
     calories: 0,
     weight: "355ml",
     grade: 1,
-    nutrition: { calories: 0, sugar: 0, sodium: 6, caffeine: 0 },
+    nutrition: { calories: 0, sugar: 0, sodium: 6 },
     allergicIngredients: [],
     warningAdditive: false,
     keyIngredients: ["에리스리톨", "스테비올배당체"],
@@ -28,11 +31,11 @@ export const comparisonProducts = [
   {
     productId: 1025,
     productName: "펩시 제로 슈거",
-    imageUrl: "/images/products/pepsi-zero.png",
+    imageUrl: publicAssetUrl("images/products/pepsi-zero.png"),
     calories: 0,
     weight: "355ml",
     grade: 2,
-    nutrition: { calories: 0, sugar: 0, sodium: 2, caffeine: 38 },
+    nutrition: { calories: 0, sugar: 0, sodium: 2 },
     allergicIngredients: [],
     warningAdditive: false,
     keyIngredients: ["수크랄로스", "아세설팜칼륨"],
@@ -40,11 +43,11 @@ export const comparisonProducts = [
   {
     productId: 1026,
     productName: "닥터페퍼 제로",
-    imageUrl: "/images/products/dr-pepper-zero.png",
+    imageUrl: publicAssetUrl("images/products/dr-pepper-zero.png"),
     calories: 0,
     weight: "355ml",
     grade: 2,
-    nutrition: { calories: 4, sugar: 0, sodium: 12, caffeine: 35 },
+    nutrition: { calories: 4, sugar: 0, sodium: 12 },
     allergicIngredients: [],
     warningAdditive: true,
     keyIngredients: ["아스파탐", "아세설팜칼륨"],
@@ -52,11 +55,11 @@ export const comparisonProducts = [
   {
     productId: 1027,
     productName: "스프라이트 제로",
-    imageUrl: "/images/products/sprite-zero.png",
+    imageUrl: publicAssetUrl("images/products/sprite-zero.png"),
     calories: 0,
     weight: "355ml",
     grade: 1,
-    nutrition: { calories: 0, sugar: 0, sodium: 8, caffeine: 0 },
+    nutrition: { calories: 0, sugar: 0, sodium: 8 },
     allergicIngredients: [],
     warningAdditive: false,
     keyIngredients: ["수크랄로스"],
