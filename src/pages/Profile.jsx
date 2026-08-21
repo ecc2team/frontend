@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "@emotion/styled";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-import { getProfile } from "../api/profile";
+import {
+  ACTIVITY_LEVEL_LABELS,
+  GENDER_LABELS,
+  getProfile,
+} from "../api/profile";
 import { signupOptions } from "../data/signupOptions";
 import profileImage from "../assets/default-profile.png";
 import removeIcon from "../assets/profile-remove.svg";
@@ -210,14 +214,6 @@ const Status = styled.div`
 `;
 
 const EXTRA_LABELS = { SOY: "대두", FROZEN: "냉동식품" };
-const detailItems = [
-  ["성별", "정보 없음", false],
-  ["생년월일", "정보 없음", false],
-  ["키", "정보 없음", true],
-  ["체중", "정보 없음", true],
-  ["활동량", "정보 없음", true],
-];
-
 function ProfileTag({ code, label, category, onRemove }) {
   return (
     <Tag $category={category} $removable={Boolean(onRemove)}>
@@ -294,6 +290,13 @@ export default function Profile() {
     );
 
   const profile = state.data;
+  const detailItems = [
+    ["성별", GENDER_LABELS[profile.gender] || "미입력", false],
+    ["생년월일", profile.birthDate || "미입력", false],
+    ["키", profile.height == null ? "미입력" : `${profile.height} cm`, true],
+    ["체중", profile.weight == null ? "미입력" : `${profile.weight} kg`, true],
+    ["활동량", ACTIVITY_LEVEL_LABELS[profile.activityLevel] || "미입력", true],
+  ];
   const displayed = editing ? { ...profile, ...draft } : profile;
   const sections = [
     ["preferredCategories", "선호하는 제품 카테고리", true],

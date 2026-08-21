@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import styled from "@emotion/styled";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-import { getProfile, updateProfilePreferences } from "../api/profile";
+import {
+  ACTIVITY_LEVEL_LABELS,
+  GENDER_LABELS,
+  getProfile,
+  updateProfilePreferences,
+} from "../api/profile";
 import { signupOptions } from "../data/signupOptions";
 import profileImage from "../assets/default-profile.png";
 
@@ -165,29 +170,20 @@ const Status = styled.div`
 `;
 
 const genderOptions = [
-  { value: "MALE", label: "남성" },
-  { value: "FEMALE", label: "여성" },
-  { value: "NONE", label: "선택 안 함" },
+  { value: "MALE", label: GENDER_LABELS.MALE },
+  { value: "FEMALE", label: GENDER_LABELS.FEMALE },
+  { value: "NONE", label: GENDER_LABELS.NONE },
 ];
-const activityOptions = [
-  { value: "LOW", label: "낮음" },
-  { value: "NORMAL", label: "보통" },
-  { value: "HIGH", label: "높음" },
-  { value: "VERY_HIGH", label: "매우 높음" },
-];
+const activityOptions = Object.entries(ACTIVITY_LEVEL_LABELS).map(
+  ([value, label]) => ({ value, label }),
+);
 
 export default function ProfileEdit() {
   const navigate = useNavigate();
   const [status, setStatus] = useState({ loading: true, error: "" });
   const [profile, setProfile] = useState(null);
   const [preferences, setPreferences] = useState(null);
-  const [additional, setAdditional] = useState({
-    gender: "NONE",
-    birthDate: "",
-    height: "",
-    weight: "",
-    activityLevel: "NORMAL",
-  });
+  const [additional, setAdditional] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -200,6 +196,13 @@ export default function ProfileEdit() {
           preferredCategories: [...(data.preferredCategories || [])],
           dislikedIngredients: [...(data.dislikedIngredients || [])],
           allergyFlags: [...(data.allergyFlags || [])],
+        });
+        setAdditional({
+          gender: data.gender,
+          birthDate: data.birthDate,
+          height: data.height ?? "",
+          weight: data.weight ?? "",
+          activityLevel: data.activityLevel,
         });
         setStatus({ loading: false, error: "" });
       })
@@ -284,21 +287,21 @@ export default function ProfileEdit() {
               성별
               <ChoiceGroup>
                 {genderOptions.map((option) => (
-                <AdditionalChoice
-                  key={option.value}
+                  <AdditionalChoice
+                    key={option.value}
                     type="button"
                     $selected={additional.gender === option.value}
                     onClick={() => changeAdditional("gender", option.value)}
                   >
                     {option.label}
-                </AdditionalChoice>
+                  </AdditionalChoice>
                 ))}
               </ChoiceGroup>
             </Field>
             <Field>
               생년월일
-            <AdditionalInput
-              type="date"
+              <AdditionalInput
+                type="date"
                 value={additional.birthDate}
                 onChange={(event) =>
                   changeAdditional("birthDate", event.target.value)
@@ -307,8 +310,8 @@ export default function ProfileEdit() {
             </Field>
             <Field>
               키 (cm)
-            <AdditionalInput
-              type="number"
+              <AdditionalInput
+                type="number"
                 min="0"
                 value={additional.height}
                 onChange={(event) =>
@@ -318,8 +321,8 @@ export default function ProfileEdit() {
             </Field>
             <Field>
               체중 (kg)
-            <AdditionalInput
-              type="number"
+              <AdditionalInput
+                type="number"
                 min="0"
                 value={additional.weight}
                 onChange={(event) =>
@@ -331,8 +334,8 @@ export default function ProfileEdit() {
               활동량
               <ChoiceGroup>
                 {activityOptions.map((option) => (
-                <AdditionalChoice
-                  key={option.value}
+                  <AdditionalChoice
+                    key={option.value}
                     type="button"
                     $selected={additional.activityLevel === option.value}
                     onClick={() =>
@@ -340,7 +343,7 @@ export default function ProfileEdit() {
                     }
                   >
                     {option.label}
-                </AdditionalChoice>
+                  </AdditionalChoice>
                 ))}
               </ChoiceGroup>
             </Field>

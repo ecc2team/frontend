@@ -140,7 +140,7 @@ export const handlers = [
   }),
 
   // 프로필 조회 Mock
-  http.get(apiUrl("profile"), () => {
+  http.get(apiUrl("users/me"), () => {
     return HttpResponse.json({
       status: 200,
       message: "프로필 조회가 성공적으로 완료되었습니다.",
