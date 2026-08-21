@@ -104,11 +104,11 @@ const ProductMeta = styled.div`
     white-space: nowrap;
   }
 `;
-const Grade = styled.span`
+const ScoreBadge = styled.span`
   padding: 4px 10px;
-  border: 1px solid ${({ $best }) => ($best ? "#39b95c" : "#ca74ee")};
+  border: 1px solid #ca74ee;
   border-radius: 14px;
-  color: ${({ $best }) => ($best ? "#18a848" : "#9134c2")};
+  color: #9134c2;
   font-size: 13px;
   font-weight: 700;
 `;
@@ -290,9 +290,7 @@ export default function ProductComparison() {
                     {product.imageUrl && <img src={product.imageUrl} alt="" />}
                   </ProductImage>
                   <ProductMeta>
-                    <Grade $best={product.grade === 1}>
-                      {product.grade}등급
-                    </Grade>
+                    <ScoreBadge>{product.score}점</ScoreBadge>
                     <h2>{product.productName}</h2>
                     <Ingredients>
                       {(product.keyIngredients ?? [])
@@ -364,11 +362,11 @@ export default function ProductComparison() {
                   : "-"}
               </TextValue>
             ))}
-            <LabelCell>★ 등급</LabelCell>
+            <LabelCell>★ ZeroPick 점수</LabelCell>
             {displayProducts.map((product, index) => (
               <TextValue key={`grade-${product?.productId ?? index}`}>
                 {product ? (
-                  <Grade $best={product.grade === 1}>{product.grade}등급</Grade>
+                  <ScoreBadge>{product.score}점</ScoreBadge>
                 ) : (
                   "-"
                 )}

@@ -20,7 +20,7 @@ const normalizeComparisonProduct = (product) => ({
   imageUrl: product.imageUrl ?? null,
   calories: Number(product.nutrition?.calories ?? product.calories) || 0,
   weight: product.weight ?? "",
-  grade: Number(product.grade) || 0,
+  score: Number(product.score ?? 0),
   nutrition: product.nutrition ?? {},
   allergicIngredients: Array.isArray(product.allergicIngredients)
     ? product.allergicIngredients
