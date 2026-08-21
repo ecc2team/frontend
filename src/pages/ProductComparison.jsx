@@ -189,7 +189,6 @@ const metricRows = [
   ["🔥", "열량 (kcal)", "calories"],
   ["◆", "당류 (g)", "sugar"],
   ["▣", "나트륨 (mg)", "sodium"],
-  ["☕", "카페인 (mg)", "caffeine"],
 ];
 
 const getMetric = (product, key) =>
