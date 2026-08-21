@@ -20,7 +20,8 @@ const normalizeIngredientCode = (ingredient) => {
 const normalizeSearchProduct = (product) => ({
   productId: product.productId ?? product.id,
   productName: product.productName ?? product.name,
-  grade: product.grade ?? 0,
+  score: Number(product.score ?? 0),
+  viewCount: Number(product.viewCount ?? 0),
   warningAdditive: Boolean(product.warningAdditive),
   imageUrl: product.imageUrl ?? product.image ?? null,
   calories: product.calories ?? product.nutrition?.calories ?? null,

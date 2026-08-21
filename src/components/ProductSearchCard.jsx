@@ -130,14 +130,10 @@ export default function ProductSearchCard({ product }) {
       </ImageBox>
       <Name>{product.productName}</Name>
       {meta.length > 0 && <Meta>{meta.join(" · ")}</Meta>}
-      {product.score != null ? (
-        <Grade>
-          {product.rank != null && `${product.rank}위 · `}
-          {product.score}점
-        </Grade>
-      ) : (
-        product.grade != null && <Grade>{product.grade}등급</Grade>
-      )}
+      <Grade>
+        {product.rank != null && `${product.rank}위 · `}
+        {product.score}점
+      </Grade>
       <Ingredients>
         {Array.isArray(product.keyIngredients) &&
           product.keyIngredients.map((ingredient) => (

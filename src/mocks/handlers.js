@@ -40,7 +40,8 @@ const socialCallback = async ({ request }) => {
 const createSearchResult = (product) => ({
   productId: product.productId,
   productName: product.productName,
-  grade: product.grade,
+  score: product.score,
+  viewCount: product.viewCount,
   warningAdditive: product.warningAdditive,
   keyIngredients: product.keyIngredients,
 
