@@ -114,10 +114,15 @@ const SectionTitle = styled.h2`
 `;
 const ExtraGrid = styled.div`
   display: grid;
-  grid-template-columns: 1.1fr 1fr 0.72fr 0.72fr 1.3fr;
-  gap: 20px;
-  @media (max-width: 950px) {
+  grid-template-columns:
+    minmax(330px, 1.45fr) minmax(200px, 1fr) minmax(120px, 0.6fr)
+    minmax(120px, 0.6fr);
+  column-gap: 32px;
+  row-gap: 28px;
+  align-items: end;
+  @media (max-width: 1100px) {
     grid-template-columns: repeat(2, 1fr);
+    column-gap: 24px;
   }
   @media (max-width: 520px) {
     grid-template-columns: 1fr;
@@ -125,7 +130,15 @@ const ExtraGrid = styled.div`
 `;
 const ChoiceGroup = styled.div`
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+`;
+const ActivityField = styled(Field)`
+  grid-column: 1 / -1;
+  align-items: start;
+`;
+const ActivityChoiceGroup = styled(ChoiceGroup)`
+  gap: 12px;
 `;
 const Choice = styled.button`
   min-width: 98px;
@@ -330,9 +343,9 @@ export default function ProfileEdit() {
                 }
               />
             </Field>
-            <Field as="div">
+            <ActivityField as="div">
               활동량
-              <ChoiceGroup>
+              <ActivityChoiceGroup>
                 {activityOptions.map((option) => (
                   <AdditionalChoice
                     key={option.value}
@@ -345,8 +358,8 @@ export default function ProfileEdit() {
                     {option.label}
                   </AdditionalChoice>
                 ))}
-              </ChoiceGroup>
-            </Field>
+              </ActivityChoiceGroup>
+            </ActivityField>
           </ExtraGrid>
         </Card>
         {signupOptions.map((group) => {
