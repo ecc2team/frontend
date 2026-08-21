@@ -75,20 +75,43 @@ export async function getProfile({ signal } = {}) {
   return normalizeProfile(result.data);
 }
 
-export async function updateProfilePreferences(preferences) {
+const toNullableNumber = (value) => {
+  if (value === "" || value === null || value === undefined) return null;
+
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
+export async function updateProfilePreferences({
+  profile,
+  preferredCategories,
+  dislikedIngredients,
+  allergyFlags,
+}) {
   const response = await authenticatedFetch(apiUrl("users/me/preferences"), {
-    method: "PATCH",
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      preferredCategories: preferences.preferredCategories,
-      dislikedIngredients: preferences.dislikedIngredients,
-      allergyFlags: preferences.allergyFlags,
+      profile: {
+        gender: profile.gender,
+        birthDate: profile.birthDate || null,
+        height: toNullableNumber(profile.height),
+        weight: toNullableNumber(profile.weight),
+        activityLevel: profile.activityLevel,
+      },
+      preferredCategories,
+      dislikedIngredients,
+      allergyFlags,
     }),
   });
   const result = await readJson(response);
 
   if (!response.ok) {
-    throw new Error(result?.message || "취향 설정을 저장하지 못했습니다.");
+    const error = new Error(
+      result?.message || "프로필 설정을 저장하지 못했습니다.",
+    );
+    error.status = response.status;
+    throw error;
   }
 
   if (result?.status !== 200) {

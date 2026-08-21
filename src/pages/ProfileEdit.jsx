@@ -240,7 +240,12 @@ export default function ProfileEdit() {
     setSaving(true);
     setMessage("");
     try {
-      await updateProfilePreferences(preferences);
+      await updateProfilePreferences({
+        profile: additional,
+        preferredCategories: preferences.preferredCategories,
+        dislikedIngredients: preferences.dislikedIngredients,
+        allergyFlags: preferences.allergyFlags,
+      });
       navigate("/profile", { replace: true });
     } catch (error) {
       setMessage(error.message);
