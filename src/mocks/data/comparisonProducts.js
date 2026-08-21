@@ -1,10 +1,13 @@
 export const MAX_COMPARISON_PRODUCTS = 50;
 
+const publicAssetUrl = (path) =>
+  `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+
 export const comparisonProducts = [
   {
     productId: 1023,
     productName: "코카콜라 제로",
-    imageUrl: "/images/products/coca-cola-zero.png",
+    imageUrl: publicAssetUrl("images/products/coca-cola-zero.png"),
     calories: 0,
     weight: "355ml",
     grade: 2,
@@ -16,7 +19,7 @@ export const comparisonProducts = [
   {
     productId: 1024,
     productName: "칠성사이다 제로",
-    imageUrl: "/images/products/chilsung-cider-zero.png",
+    imageUrl: publicAssetUrl("images/products/chilsung-cider-zero.png"),
     calories: 0,
     weight: "355ml",
     grade: 1,
@@ -28,7 +31,7 @@ export const comparisonProducts = [
   {
     productId: 1025,
     productName: "펩시 제로 슈거",
-    imageUrl: "/images/products/pepsi-zero.png",
+    imageUrl: publicAssetUrl("images/products/pepsi-zero.png"),
     calories: 0,
     weight: "355ml",
     grade: 2,
@@ -40,7 +43,7 @@ export const comparisonProducts = [
   {
     productId: 1026,
     productName: "닥터페퍼 제로",
-    imageUrl: "/images/products/dr-pepper-zero.png",
+    imageUrl: publicAssetUrl("images/products/dr-pepper-zero.png"),
     calories: 0,
     weight: "355ml",
     grade: 2,
@@ -52,7 +55,7 @@ export const comparisonProducts = [
   {
     productId: 1027,
     productName: "스프라이트 제로",
-    imageUrl: "/images/products/sprite-zero.png",
+    imageUrl: publicAssetUrl("images/products/sprite-zero.png"),
     calories: 0,
     weight: "355ml",
     grade: 1,

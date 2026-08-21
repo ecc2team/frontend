@@ -90,6 +90,11 @@ export async function reissueAccessToken() {
 }
 
 export async function authenticatedFetch(url, options = {}) {
+  const redirectToLogin = () => {
+    if (window.location.hash !== "#/login") {
+      window.location.assign(`${import.meta.env.BASE_URL}#/login`);
+    }
+  };
   const request = (headers) =>
     fetch(url, {
       ...options,
@@ -102,9 +107,7 @@ export async function authenticatedFetch(url, options = {}) {
 
   const accessToken = await reissueAccessToken();
   if (!accessToken) {
-    if (window.location.pathname !== "/login") {
-      window.location.assign("/login");
-    }
+    redirectToLogin();
     return response;
   }
 
@@ -115,9 +118,7 @@ export async function authenticatedFetch(url, options = {}) {
 
   if (response.status === 401) {
     clearAuth();
-    if (window.location.pathname !== "/login") {
-      window.location.assign("/login");
-    }
+    redirectToLogin();
   }
 
   return response;

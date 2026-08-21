@@ -1,3 +1,6 @@
+const publicAssetUrl = (path) =>
+  `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+
 export const products = [
   {
     productId: 1023,
@@ -8,7 +11,7 @@ export const products = [
       "특별한 감미료 이슈 없이 무난하게 구성되어 있어, 일반적인 수준의 제로 상품입니다.",
 
     // 검색 결과 화면용 임시 필드
-    imageUrl: "/images/products/coca-cola-zero.png",
+    imageUrl: publicAssetUrl("images/products/coca-cola-zero.png"),
     calories: 0,
     weight: "355ml",
 
@@ -127,7 +130,7 @@ export const products = [
     productId: 1024,
     productName: "칠성사이다 제로",
 
-    imageUrl: "/images/products/chilsung-cider-zero.png",
+    imageUrl: publicAssetUrl("images/products/chilsung-cider-zero.png"),
     calories: 0,
     weight: "355ml",
 
@@ -243,7 +246,7 @@ export const products = [
     productId: 2011,
     productName: "저당 초코 단백질바",
 
-    imageUrl: "/images/products/low-sugar-protein-bar.png",
+    imageUrl: publicAssetUrl("images/products/low-sugar-protein-bar.png"),
     calories: 185,
     weight: "50g",
 
