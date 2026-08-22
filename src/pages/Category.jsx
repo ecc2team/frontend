@@ -270,7 +270,6 @@ export default function CategoryPage() {
                 <option value="recommended">추천순</option>
                 <option value="latest">최신순</option>
                 <option value="name">가나다순</option>
-                <option value="popular">비교함 인기순</option>
                 <option value="views">조회수순</option>
               </SortSelect>
             </SortPanel>
