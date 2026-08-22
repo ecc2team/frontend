@@ -10,6 +10,7 @@ import {
 import { mockUser, mockTokens } from "./data/mockUser.js";
 import { recentProducts } from "./data/recentProducts.js";
 import { DEFAULT_CATEGORIES } from "../data/categories.js";
+import { mockDuplicates } from "../data/signupOptions.js";
 
 // TODO: Swagger의 실제 endpoint로 변경
 const SIGNUP_PATH = apiUrl("auth/signup");
@@ -111,7 +112,56 @@ export const handlers = [
     return HttpResponse.json({ status: 200, message: "최근 조회 상품 삭제 완료" });
   }),
 
-  // 제품 검색
+  // 정렬 및 페이지네이션을 지원하는 전체 제품 검색
+  http.get(apiUrl("products"), ({ request }) => {
+    const url = new URL(request.url);
+    const keyword = (url.searchParams.get("keyword") ?? "")
+      .trim()
+      .toLowerCase();
+    const page = Number(url.searchParams.get("page") ?? 0);
+    const size = Number(url.searchParams.get("size") ?? 20);
+    const sort = url.searchParams.get("sort") ?? "recommended";
+    const filteredProducts = products
+      .filter((product) => product.productName.toLowerCase().includes(keyword))
+      .slice();
+
+    if (sort === "latest") {
+      filteredProducts.sort((left, right) => right.productId - left.productId);
+    } else if (sort === "name") {
+      filteredProducts.sort((left, right) =>
+        left.productName.localeCompare(right.productName, "ko-KR"),
+      );
+    } else if (sort === "popular" || sort === "views") {
+      filteredProducts.sort(
+        (left, right) => Number(right.viewCount) - Number(left.viewCount),
+      );
+    } else {
+      filteredProducts.sort(
+        (left, right) => Number(right.score) - Number(left.score),
+      );
+    }
+
+    const totalElements = filteredProducts.length;
+    const totalPages = totalElements ? Math.ceil(totalElements / size) : 0;
+    const content = filteredProducts.slice(page * size, page * size + size);
+
+    return HttpResponse.json({
+      status: 200,
+      message: "전체 상품 리스트 조회가 완료되었습니다.",
+      data: {
+        content: content.map(createSearchResult),
+        pageInfo: {
+          page,
+          size,
+          totalElements,
+          totalPages,
+          last: totalPages === 0 || page >= totalPages - 1,
+        },
+      },
+    });
+  }),
+
+  // 기존 키워드 검색
   http.get(apiUrl("products/search"), ({ request }) => {
     const url = new URL(request.url);
 
@@ -283,6 +333,20 @@ export const handlers = [
       status: 200,
       message: "이메일 중복 확인이 완료되었습니다.",
       data: { email, isAvailable: email !== mockUser.email },
+    });
+  }),
+
+  http.get(apiUrl("users/check-nickname"), ({ request }) => {
+    const nickname = new URL(request.url).searchParams.get("nickname") || "";
+    return HttpResponse.json({
+      status: 200,
+      message: "닉네임 중복 확인 결과입니다.",
+      data: {
+        nickname,
+        isAvailable:
+          nickname !== mockUser.nickname &&
+          !mockDuplicates.nickname.includes(nickname),
+      },
     });
   }),
 

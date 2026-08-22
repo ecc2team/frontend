@@ -1,12 +1,9 @@
-import { mockDuplicates } from "../data/signupOptions";
 import { apiUrl, deduplicatedGet, readJson } from "../api/client";
+import { checkNickname } from "../api/users";
 
 export async function checkDuplicate(field, value) {
   if (!value.trim()) throw new Error("값을 먼저 입력해주세요.");
-  if (field !== "email") {
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    return !mockDuplicates[field].includes(value.trim());
-  }
+  if (field === "nickname") return checkNickname(value);
   const response = await deduplicatedGet(
     `${apiUrl("users/check-email")}?email=${encodeURIComponent(value.trim())}`,
     { credentials: "include" },

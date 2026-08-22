@@ -104,18 +104,42 @@ const normalizeProductDetail = (product) => {
   };
 };
 
-export async function searchProducts({ query, page = 0, size = 20, signal }) {
+export async function searchProducts({
+  query,
+  page = 0,
+  size = 20,
+  sort = "recommended",
+  signal,
+}) {
   const params = new URLSearchParams({
     keyword: query,
+    page: String(page),
+    size: String(size),
+    sort,
   });
   const response = await deduplicatedGet(
-    `${apiUrl("products/search")}?${params.toString()}`,
+    `${apiUrl("products")}?${params.toString()}`,
     { signal },
   );
   const result = await response.json();
 
   if (!response.ok) {
     throw new Error(result.message || "상품 검색 중 오류가 발생했습니다.");
+  }
+
+  if (Array.isArray(result?.data?.content) && result.data.pageInfo) {
+    const pageInfo = result.data.pageInfo;
+
+    return {
+      content: result.data.content.map(normalizeSearchProduct),
+      pageInfo: {
+        pageNumber: Number(pageInfo.page ?? 0),
+        pageSize: Number(pageInfo.size ?? size),
+        totalElements: Number(pageInfo.totalElements ?? 0),
+        totalPages: Number(pageInfo.totalPages ?? 0),
+        isLast: Boolean(pageInfo.last),
+      },
+    };
   }
 
   if (Array.isArray(result?.data)) {

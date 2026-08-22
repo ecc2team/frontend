@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import Pagination from "../components/Pagination";
 import ProductSearchCard from "../components/ProductSearchCard";
+import SortSection from "../components/SortSection";
 import {
   getCategories,
   getCategoryBestProducts,
@@ -14,6 +15,7 @@ import {
   isSupportedCategoryCode,
   selectSupportedCategories,
 } from "../data/categories";
+import { SORT_VALUES } from "../data/sortOptions";
 
 const PAGE_SIZE = 20;
 
@@ -54,32 +56,6 @@ const Category = styled.button`
   white-space: nowrap;
   cursor: pointer;
 `;
-const SortPanel = styled.div`
-  width: min(1028px, 100%);
-  min-height: 68px;
-  margin: 24px auto 17px;
-  padding: 13px 38px;
-  border: 1px solid #f3deff;
-  border-radius: 10px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  gap: 35px;
-`;
-const SortLabel = styled.label`
-  font-size: 18px;
-  font-weight: 700;
-`;
-const SortSelect = styled.select`
-  width: min(309px, 100%);
-  height: 40px;
-  padding: 0 18px;
-  border: 1px solid #df6bff;
-  border-radius: 10px;
-  background: #fff;
-  color: #332d33;
-  font-size: 17px;
-`;
 const SectionTitle = styled.h1`
   margin: 24px 0 0;
   font-size: 20px;
@@ -117,12 +93,13 @@ const getRouteCategoryCode = (pathname) => {
 export default function CategoryPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const routeCode = getRouteCategoryCode(location.pathname);
   const legacyQueryCode = searchParams.get("category")?.toUpperCase() || "";
   const parsedPage = Number(searchParams.get("page") || 0);
   const page = Number.isInteger(parsedPage) && parsedPage >= 0 ? parsedPage : 0;
-  const sort = searchParams.get("sort") || "recommended";
+  const requestedSort = searchParams.get("sort") || "recommended";
+  const sort = SORT_VALUES.has(requestedSort) ? requestedSort : "recommended";
   const [categories, setCategories] = useState([]);
   const [selectedCode, setSelectedCode] = useState("");
   const [categoryError, setCategoryError] = useState("");
@@ -145,27 +122,39 @@ export default function CategoryPage() {
       .then((items) => {
         const supported = selectSupportedCategories(items);
         setCategories(supported);
-        const requestedCode = isSupportedCategoryCode(routeCode)
-          ? routeCode
-          : isSupportedCategoryCode(legacyQueryCode)
-            ? legacyQueryCode
-            : supported[0]?.code || "";
-        setSelectedCode(requestedCode);
         setCategoryError("");
-
-        if (requestedCode && routeCode !== requestedCode) {
-          navigate(
-            `${categoryPath(requestedCode)}?page=${page}&sort=${encodeURIComponent(sort)}`,
-            { replace: true },
-          );
-        }
       })
       .catch((error) => {
         if (error.name !== "AbortError") setCategoryError(error.message);
       });
 
     return () => controller.abort();
-  }, [legacyQueryCode, navigate, page, routeCode, sort]);
+  }, []);
+
+  useEffect(() => {
+    if (categories.length === 0) return;
+    let active = true;
+    const requestedCode = isSupportedCategoryCode(routeCode)
+      ? routeCode
+      : isSupportedCategoryCode(legacyQueryCode)
+        ? legacyQueryCode
+        : categories[0].code;
+
+    queueMicrotask(() => {
+      if (active) setSelectedCode(requestedCode);
+    });
+
+    if (routeCode !== requestedCode) {
+      navigate(
+        `${categoryPath(requestedCode)}?page=${page}&sort=${encodeURIComponent(sort)}`,
+        { replace: true },
+      );
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [categories, legacyQueryCode, navigate, page, routeCode, sort]);
 
   useEffect(() => {
     if (!selectedCode) return undefined;
@@ -250,6 +239,14 @@ export default function CategoryPage() {
       `${categoryPath(code)}?page=${nextPage}&sort=${encodeURIComponent(nextSort)}`,
     );
   };
+  const changeSort = (nextSort) => {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.set("page", "0");
+      nextParams.set("sort", nextSort);
+      return nextParams;
+    });
+  };
   const selectedCategory = categories.find(({ code }) => code === selectedCode);
 
   return (
@@ -293,21 +290,7 @@ export default function CategoryPage() {
                 <SectionStatus>베스트 상품이 없습니다.</SectionStatus>
               ))}
 
-            <SortPanel>
-              <SortLabel htmlFor="category-sort">정렬 기준</SortLabel>
-              <SortSelect
-                id="category-sort"
-                value={sort}
-                onChange={(event) =>
-                  navigateToCategory(selectedCode, 0, event.target.value)
-                }
-              >
-                <option value="recommended">추천순</option>
-                <option value="latest">최신순</option>
-                <option value="name">가나다순</option>
-                <option value="views">조회수순</option>
-              </SortSelect>
-            </SortPanel>
+            <SortSection value={sort} onChange={changeSort} afterBest />
 
             <SectionTitle ref={resultsRef}>전체 상품</SectionTitle>
             {productsState.status === "loading" && (

@@ -5,12 +5,14 @@ import Header from "../components/Header";
 import Pagination from "../components/Pagination";
 import ProductSearchCard from "../components/ProductSearchCard";
 import SearchBar from "../components/SearchBar";
+import SortSection from "../components/SortSection";
 import { searchProducts } from "../api/products";
 import { getCategoryProducts } from "../api/categories";
 import {
   DEFAULT_CATEGORIES,
   isSupportedCategoryCode,
 } from "../data/categories";
+import { SORT_VALUES } from "../data/sortOptions";
 
 const Page = styled.div`
   min-height: 100svh;
@@ -50,45 +52,6 @@ const Category = styled.button`
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-`;
-const SortPanel = styled.div`
-  width: min(1028px, 100%);
-  min-height: 68px;
-  margin: 0 auto 17px;
-  padding: 13px 38px;
-  border: 1px solid #f3deff;
-  border-radius: 10px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  gap: 35px;
-
-  @media (max-width: 600px) {
-    padding-inline: 20px;
-    gap: 18px;
-  }
-`;
-const SortLabel = styled.label`
-  flex: 0 0 auto;
-  font-size: 18px;
-  font-weight: 700;
-`;
-const SortSelect = styled.select`
-  width: min(309px, 100%);
-  height: 40px;
-  padding: 0 18px;
-  border: 1px solid #df6bff;
-  border-radius: 10px;
-  background: #fff;
-  color: #332d33;
-  font-size: 17px;
-  cursor: pointer;
-  outline: none;
-
-  &:focus-visible {
-    outline: 3px solid #df6bff;
-    outline-offset: 2px;
-  }
 `;
 const ResultPanel = styled.section`
   padding: 0;
@@ -133,15 +96,6 @@ const Grid = styled.div`
     grid-template-columns: 1fr;
   }
 `;
-const SORT_OPTIONS = [
-  ["recommended", "추천순"],
-  ["latest", "최신순"],
-  ["name", "가나다순"],
-  ["popular", "인기순"],
-  ["views", "조회순"],
-];
-const SORT_CODES = new Set(SORT_OPTIONS.map(([code]) => code));
-
 export default function ProductSearchResult() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = (searchParams.get("query") || "").trim();
@@ -152,7 +106,7 @@ export default function ProductSearchResult() {
     ? requestedCategory
     : "";
   const requestedSort = searchParams.get("sort") || "recommended";
-  const sort = SORT_CODES.has(requestedSort) ? requestedSort : "recommended";
+  const sort = SORT_VALUES.has(requestedSort) ? requestedSort : "recommended";
   const retryKey = searchParams.get("retry") || "";
   const [state, setState] = useState({
     status: "idle",
@@ -175,7 +129,13 @@ export default function ProductSearchResult() {
           keyword: query,
           signal: controller.signal,
         })
-      : searchProducts({ query, page, size: 20, signal: controller.signal });
+      : searchProducts({
+          query,
+          page,
+          size: 20,
+          sort,
+          signal: controller.signal,
+        });
 
     request
       .then((data) => {
@@ -221,6 +181,13 @@ export default function ProductSearchResult() {
       sort,
       page: "0",
     });
+  const changeSort = (nextSort) =>
+    setSearchParams({
+      query,
+      ...(category ? { category } : {}),
+      sort: nextSort,
+      page: "0",
+    });
   const changePage = (nextPage) => {
     setSearchParams({
       query,
@@ -261,25 +228,7 @@ export default function ProductSearchResult() {
             </Category>
           ))}
         </Categories>
-        <SortPanel>
-          <SortLabel htmlFor="product-sort">정렬 기준</SortLabel>
-          <SortSelect
-            id="product-sort"
-            value={sort}
-            onChange={(event) =>
-              setSearchParams({
-                query,
-                ...(category ? { category } : {}),
-                sort: event.target.value,
-                page: "0",
-              })
-            }
-          >
-            {SORT_OPTIONS.map(([code, label]) => (
-              <option key={code} value={code}>{label}</option>
-            ))}
-          </SortSelect>
-        </SortPanel>
+        <SortSection value={sort} onChange={changeSort} />
         <ResultPanel ref={resultsRef}>
           <Count>
             {query
