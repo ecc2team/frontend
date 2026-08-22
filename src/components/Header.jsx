@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
 import { Link, useNavigate } from "react-router-dom";
 import logoMark from "../assets/zeropick-mark.png";
@@ -251,12 +251,13 @@ const ProfileLink = styled(Link)`
   }
 `;
 
-const MobileMenu = styled.button`
+const MobileMenuButton = styled.button`
   display: none;
   margin-left: auto;
   border: 0;
   background: none;
   font-size: 30px;
+  line-height: 1;
   cursor: pointer;
 
   @media (max-width: 900px) {
@@ -264,14 +265,199 @@ const MobileMenu = styled.button`
   }
 `;
 
+const MobileOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgb(20 12 22 / 48%);
+  opacity: ${({ $open }) => ($open ? 1 : 0)};
+  visibility: ${({ $open }) => ($open ? "visible" : "hidden")};
+  pointer-events: ${({ $open }) => ($open ? "auto" : "none")};
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+
+  @media (min-width: 901px) {
+    display: none;
+  }
+`;
+
+const MobilePanel = styled.aside`
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 101;
+  width: min(320px, 80vw);
+  height: 100vh;
+  height: 100dvh;
+  padding: 26px 22px 32px;
+  background: #fff;
+  box-shadow: -8px 0 28px rgb(82 48 91 / 18%);
+  box-sizing: border-box;
+  overflow-y: auto;
+  transform: translateX(${({ $open }) => ($open ? "0" : "100%")});
+  visibility: ${({ $open }) => ($open ? "visible" : "hidden")};
+  transition:
+    transform 0.3s ease,
+    visibility 0.3s ease;
+
+  @media (min-width: 901px) {
+    display: none;
+  }
+`;
+
+const MobilePanelHeader = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+`;
+
+const MobileCloseButton = styled.button`
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #332d33;
+  font-size: 34px;
+  line-height: 1;
+  cursor: pointer;
+`;
+
+const MobileNav = styled.nav`
+  display: flex;
+  flex-direction: column;
+
+  > a,
+  > button {
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 10px;
+    border: 0;
+    border-bottom: 1px solid #f3deff;
+    background: transparent;
+    color: #332d33;
+    font: 700 18px/1.4 Inter, Arial, sans-serif;
+    text-align: left;
+    text-decoration: none;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+
+  > a:hover,
+  > a:focus-visible,
+  > button:hover,
+  > button:focus-visible {
+    background: #fbf4ff;
+    color: #8b25a8;
+    outline: none;
+  }
+`;
+
+const MobileCategoryButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &::after {
+    content: "⌄";
+    font-size: 22px;
+    transform: rotate(${({ $open }) => ($open ? "180deg" : "0")});
+    transition: transform 0.2s ease;
+  }
+`;
+
+const MobileCategoryList = styled.div`
+  display: ${({ $open }) => ($open ? "block" : "none")};
+  padding: 6px 0 8px 14px;
+  background: #fbf4ff;
+
+  a {
+    display: block;
+    padding: 11px 14px;
+    color: #5c5454;
+    font-size: 16px;
+    line-height: 1.4;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      color: #8b25a8;
+      outline: none;
+    }
+  }
+`;
+
+const MobileActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 28px;
+
+  a,
+  button {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 18px;
+    border: 1px solid #df6bff;
+    border-radius: 24px;
+    background: #fff;
+    color: #332d33;
+    font: 700 17px/1 Inter, Arial, sans-serif;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+
+  > :last-child {
+    background: #df69ff;
+    color: #fff;
+  }
+`;
+
 function Header() {
   const navigate = useNavigate();
   const categories = useCategories();
+  const menuButtonRef = useRef(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileCategoryOpen, setIsMobileCategoryOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() =>
     Boolean(localStorage.getItem("accessToken")),
   );
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+    setIsMobileCategoryOpen(false);
+  };
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") closeMobileMenu();
+    };
+    const desktopQuery = window.matchMedia("(min-width: 901px)");
+    const handleDesktopChange = (event) => {
+      if (event.matches) closeMobileMenu();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    desktopQuery.addEventListener("change", handleDesktopChange);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      desktopQuery.removeEventListener("change", handleDesktopChange);
+    };
+  }, [isMobileMenuOpen]);
+
   const logout = async () => {
+    closeMobileMenu();
     try {
       await requestLogout();
     } catch {
@@ -333,10 +519,87 @@ function Header() {
             </>
           )}
         </Actions>
-        <MobileMenu type="button" aria-label="메뉴 열기">
+        <MobileMenuButton
+          ref={menuButtonRef}
+          type="button"
+          aria-label="메뉴 열기"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setIsMobileMenuOpen(true)}
+        >
           ☰
-        </MobileMenu>
+        </MobileMenuButton>
       </Inner>
+      <MobileOverlay $open={isMobileMenuOpen} onClick={closeMobileMenu} />
+      <MobilePanel
+        id="mobile-navigation"
+        $open={isMobileMenuOpen}
+        role="dialog"
+        aria-modal="true"
+        aria-label="모바일 메뉴"
+        aria-hidden={!isMobileMenuOpen}
+      >
+        <MobilePanelHeader>
+          <MobileCloseButton
+            type="button"
+            aria-label="메뉴 닫기"
+            onClick={closeMobileMenu}
+          >
+            ×
+          </MobileCloseButton>
+        </MobilePanelHeader>
+        <MobileNav aria-label="모바일 주요 메뉴">
+          <MobileCategoryButton
+            type="button"
+            $open={isMobileCategoryOpen}
+            aria-expanded={isMobileCategoryOpen}
+            aria-controls="mobile-category-list"
+            onClick={() => setIsMobileCategoryOpen((open) => !open)}
+          >
+            카테고리
+          </MobileCategoryButton>
+          <MobileCategoryList
+            id="mobile-category-list"
+            $open={isMobileCategoryOpen}
+          >
+            {categories.map((category) => (
+              <Link
+                to={categoryPath(category.code)}
+                key={category.code}
+                onClick={closeMobileMenu}
+              >
+                {category.name}
+              </Link>
+            ))}
+          </MobileCategoryList>
+          {navItems.slice(1).map(([label, path]) => (
+            <Link to={path} key={path} onClick={closeMobileMenu}>
+              {label}
+            </Link>
+          ))}
+        </MobileNav>
+        <MobileActions>
+          {isLoggedIn ? (
+            <>
+              <Link to="/profile" onClick={closeMobileMenu}>
+                프로필
+              </Link>
+              <button type="button" onClick={logout}>
+                로그아웃
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" onClick={closeMobileMenu}>
+                로그인
+              </Link>
+              <Link to="/signup" onClick={closeMobileMenu}>
+                회원가입
+              </Link>
+            </>
+          )}
+        </MobileActions>
+      </MobilePanel>
     </Shell>
   );
 }
