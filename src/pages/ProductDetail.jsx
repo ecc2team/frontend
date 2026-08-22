@@ -267,7 +267,7 @@ export default function ProductDetail() {
     error: "",
   });
   const [expanded, setExpanded] = useState(false);
-  const [imageFailed, setImageFailed] = useState(false);
+  const [failedImageUrl, setFailedImageUrl] = useState(null);
   const [actionError, setActionError] = useState("");
   useEffect(() => {
     const controller = new AbortController();
@@ -343,11 +343,11 @@ export default function ProductDetail() {
         <Summary>
           <ProductVisual>
             <ImageBox>
-              {product.imageUrl && !imageFailed ? (
+              {product.imageUrl && failedImageUrl !== product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.productName}
-                  onError={() => setImageFailed(true)}
+                  onError={() => setFailedImageUrl(product.imageUrl)}
                 />
               ) : (
                 <span className="fallback">제품 이미지 없음</span>
