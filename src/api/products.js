@@ -24,7 +24,12 @@ const normalizeSearchProduct = (product) => ({
   viewCount: Number(product.viewCount ?? 0),
   warningAdditive: Boolean(product.warningAdditive),
   imageUrl: product.imageUrl ?? product.image ?? null,
+  summary: product.summary ?? "",
   calories: product.calories ?? product.nutrition?.calories ?? null,
+  sugar: product.sugar ?? product.nutrition?.sugar ?? null,
+  protein: product.protein ?? product.nutrition?.protein ?? null,
+  sodium: product.sodium ?? product.nutrition?.sodium ?? null,
+  ingredientsAnalysis: product.ingredientsAnalysis ?? {},
   weight: product.weight ?? null,
   keyIngredients: (
     product.keyIngredients ??
@@ -102,9 +107,7 @@ const normalizeProductDetail = (product) => {
 
 export async function searchProducts({ query, page = 0, size = 20, signal }) {
   const params = new URLSearchParams({
-    query,
-    page: String(page),
-    size: String(size),
+    keyword: query,
   });
   const response = await deduplicatedGet(
     `${apiUrl("products/search")}?${params.toString()}`,
@@ -132,13 +135,6 @@ export async function searchProducts({ query, page = 0, size = 20, signal }) {
         totalPages,
         isLast: totalPages === 0 || safePage >= totalPages - 1,
       },
-    };
-  }
-
-  if (Array.isArray(result?.data?.content) && result.data.pageInfo) {
-    return {
-      ...result.data,
-      content: result.data.content.map(normalizeSearchProduct),
     };
   }
 
