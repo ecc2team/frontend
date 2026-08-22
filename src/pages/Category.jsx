@@ -57,7 +57,7 @@ const Category = styled.button`
 const SortPanel = styled.div`
   width: min(1028px, 100%);
   min-height: 68px;
-  margin: 0 auto 17px;
+  margin: 24px auto 17px;
   padding: 13px 38px;
   border: 1px solid #f3deff;
   border-radius: 10px;
@@ -179,28 +179,7 @@ export default function CategoryPage() {
         status: "loading",
         error: "",
       }));
-      setBestState((previous) => ({
-        ...previous,
-        status: "loading",
-        error: "",
-      }));
     });
-
-    getCategoryBestProducts(selectedCode, 5, {
-      signal: controller.signal,
-    })
-      .then((products) => {
-        if (active)
-          setBestState({ status: "success", content: products, error: "" });
-      })
-      .catch((error) => {
-        if (active && error.name !== "AbortError")
-          setBestState({
-            status: "error",
-            content: [],
-            error: error.message,
-          });
-      });
 
     getCategoryProducts(selectedCode, page, PAGE_SIZE, sort, {
       signal: controller.signal,
@@ -230,6 +209,42 @@ export default function CategoryPage() {
     };
   }, [selectedCode, page, sort]);
 
+  useEffect(() => {
+    if (!selectedCode) return undefined;
+    const controller = new AbortController();
+    let active = true;
+
+    queueMicrotask(() => {
+      if (!active) return;
+      setBestState((previous) => ({
+        ...previous,
+        status: "loading",
+        error: "",
+      }));
+    });
+
+    getCategoryBestProducts(selectedCode, 5, {
+      signal: controller.signal,
+    })
+      .then((products) => {
+        if (active)
+          setBestState({ status: "success", content: products, error: "" });
+      })
+      .catch((error) => {
+        if (active && error.name !== "AbortError")
+          setBestState({
+            status: "error",
+            content: [],
+            error: error.message,
+          });
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [selectedCode]);
+
   const navigateToCategory = (code, nextPage = 0, nextSort = sort) => {
     navigate(
       `${categoryPath(code)}?page=${nextPage}&sort=${encodeURIComponent(nextSort)}`,
@@ -258,22 +273,6 @@ export default function CategoryPage() {
           <Status role="alert">{categoryError}</Status>
         ) : (
           <>
-            <SortPanel>
-              <SortLabel htmlFor="category-sort">정렬 기준</SortLabel>
-              <SortSelect
-                id="category-sort"
-                value={sort}
-                onChange={(event) =>
-                  navigateToCategory(selectedCode, 0, event.target.value)
-                }
-              >
-                <option value="recommended">추천순</option>
-                <option value="latest">최신순</option>
-                <option value="name">가나다순</option>
-                <option value="views">조회수순</option>
-              </SortSelect>
-            </SortPanel>
-
             <SectionTitle>{selectedCategory?.name || "카테고리"} BEST 5</SectionTitle>
             {bestState.status === "loading" && (
               <SectionStatus role="status">베스트 상품을 불러오고 있습니다...</SectionStatus>
@@ -293,6 +292,22 @@ export default function CategoryPage() {
               ) : (
                 <SectionStatus>베스트 상품이 없습니다.</SectionStatus>
               ))}
+
+            <SortPanel>
+              <SortLabel htmlFor="category-sort">정렬 기준</SortLabel>
+              <SortSelect
+                id="category-sort"
+                value={sort}
+                onChange={(event) =>
+                  navigateToCategory(selectedCode, 0, event.target.value)
+                }
+              >
+                <option value="recommended">추천순</option>
+                <option value="latest">최신순</option>
+                <option value="name">가나다순</option>
+                <option value="views">조회수순</option>
+              </SortSelect>
+            </SortPanel>
 
             <SectionTitle ref={resultsRef}>전체 상품</SectionTitle>
             {productsState.status === "loading" && (
