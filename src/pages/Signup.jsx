@@ -272,6 +272,8 @@ export default function Signup({ onboarding = false }) {
     password: false,
     nickname: false,
   });
+  const [nicknameChecked, setNicknameChecked] = useState(false);
+  const [nicknameAvailable, setNicknameAvailable] = useState(false);
   const [selections, setSelections] = useState(initialSelections);
   const [message, setMessage] = useState({ text: "", error: false });
   const [loading, setLoading] = useState(false);
@@ -329,7 +331,11 @@ export default function Signup({ onboarding = false }) {
       setEmailCodeVerified(false);
       setEmailCode("");
     }
-    if (field === "nickname") currentNicknameRef.current = value;
+    if (field === "nickname") {
+      currentNicknameRef.current = value;
+      setNicknameChecked(false);
+      setNicknameAvailable(false);
+    }
   };
   const verifyCode = async () => {
     if (!values.email.trim() || !emailCode.trim() || verifyingCode) {
@@ -376,6 +382,10 @@ export default function Signup({ onboarding = false }) {
     if (checkingField) return;
     const requestedValue = values[field].trim();
     setVerified((prev) => ({ ...prev, [field]: false }));
+    if (field === "nickname") {
+      setNicknameChecked(false);
+      setNicknameAvailable(false);
+    }
     setCheckingField(field);
     try {
       const available = await checkDuplicate(field, requestedValue);
@@ -384,6 +394,10 @@ export default function Signup({ onboarding = false }) {
         currentNicknameRef.current.trim() !== requestedValue
       ) {
         return;
+      }
+      if (field === "nickname") {
+        setNicknameChecked(true);
+        setNicknameAvailable(available === true);
       }
       setVerified((prev) => ({ ...prev, [field]: available }));
       if (field === "email" && available) {
@@ -402,6 +416,10 @@ export default function Signup({ onboarding = false }) {
         error: !available,
       });
     } catch (error) {
+      if (field === "nickname") {
+        setNicknameChecked(false);
+        setNicknameAvailable(false);
+      }
       setMessage({ text: error.message, error: true });
     } finally {
       setCheckingField(null);
@@ -416,7 +434,10 @@ export default function Signup({ onboarding = false }) {
     }));
   const submit = async (event) => {
     event.preventDefault();
-    if (!isSocialOnboarding && !verified.nickname) {
+    if (
+      !isSocialOnboarding &&
+      (!nicknameChecked || !nicknameAvailable)
+    ) {
       setMessage({ text: "닉네임 중복 확인을 해주세요.", error: true });
       return;
     }
@@ -515,13 +536,18 @@ export default function Signup({ onboarding = false }) {
                         >
                           {checkingField === key ? "확인 중" : "중복 확인"}
                         </Verify>
-                        {((key === "email" && verified.email === true) ||
-                          (key === "nickname" &&
-                            verified.nickname === true)) && (
+                        {key === "email" && verified.email === true && (
                           <Check>
                             <img src={checkIcon} alt="사용 가능" />
                           </Check>
                         )}
+                        {key === "nickname" &&
+                          nicknameChecked === true &&
+                          nicknameAvailable === true && (
+                            <Check>
+                              <img src={checkIcon} alt="사용 가능" />
+                            </Check>
+                          )}
                       </VerifyArea>
                     ))}
                 </Field>
