@@ -281,6 +281,7 @@ export default function Signup({ onboarding = false }) {
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [checkingField, setCheckingField] = useState(null);
   const currentEmailRef = useRef("");
+  const currentNicknameRef = useRef(socialOnboarding?.nickname ?? "");
 
   useEffect(() => {
     if (resendSeconds <= 0) return undefined;
@@ -327,6 +328,7 @@ export default function Signup({ onboarding = false }) {
       setEmailCodeVerified(false);
       setEmailCode("");
     }
+    if (field === "nickname") currentNicknameRef.current = value;
   };
   const verifyCode = async () => {
     if (!values.email.trim() || !emailCode.trim() || verifyingCode) {
@@ -371,16 +373,31 @@ export default function Signup({ onboarding = false }) {
   };
   const verify = async (field) => {
     if (checkingField) return;
+    const requestedValue = values[field].trim();
+    setVerified((prev) => ({ ...prev, [field]: false }));
     setCheckingField(field);
     try {
-      const available = await checkDuplicate(field, values[field]);
+      const available = await checkDuplicate(field, requestedValue);
+      if (
+        field === "nickname" &&
+        currentNicknameRef.current.trim() !== requestedValue
+      ) {
+        return;
+      }
       setVerified((prev) => ({ ...prev, [field]: available }));
       if (field === "email" && available) {
         await sendVerificationCode(values.email);
         return;
       }
       setMessage({
-        text: available ? "사용할 수 있습니다." : "이미 사용 중인 값입니다.",
+        text:
+          field === "nickname"
+            ? available
+              ? "사용 가능한 닉네임입니다."
+              : "이미 사용 중인 닉네임입니다."
+            : available
+              ? "사용할 수 있습니다."
+              : "이미 사용 중인 값입니다.",
         error: !available,
       });
     } catch (error) {
@@ -398,6 +415,10 @@ export default function Signup({ onboarding = false }) {
     }));
   const submit = async (event) => {
     event.preventDefault();
+    if (!isSocialOnboarding && !verified.nickname) {
+      setMessage({ text: "닉네임 중복 확인을 해주세요.", error: true });
+      return;
+    }
     if (
       !isSocialOnboarding &&
       !visibleFields

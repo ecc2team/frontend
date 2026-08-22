@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
@@ -7,6 +7,7 @@ import AdditionalSignupInfo from "../components/AdditionalSignupInfo";
 import { signupOptions } from "../data/signupOptions";
 import { getProfile } from "../api/profile";
 import { submitSocialOnboarding } from "../api/auth";
+import { checkNickname } from "../api/users";
 
 const Page = styled.div`min-height: 100vh; background: #f9f4fd; color: #242024;`;
 const Main = styled.main`width: min(1151px, calc(100% - 40px)); margin: 0 auto; padding: 20px 0 70px;`;
@@ -47,10 +48,18 @@ const DuplicateButton = styled.button`
   color: #8f8686;
   font-size: 16px;
   white-space: nowrap;
-  cursor: not-allowed;
+  cursor: pointer;
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
 `;
 const Notice = styled.p`
-  margin: 8px 0 0 182px; color: #6d6670; font-size: 13px;
+  margin: 8px 0 0 182px;
+  color: ${({ $status }) =>
+    $status === "available"
+      ? "#248a3d"
+      : $status === "idle"
+        ? "#6d6670"
+        : "#c62828"};
+  font-size: 13px;
   @media (max-width: 760px) { margin-left: 0; }
 `;
 const Preferences = styled.div`display: grid; gap: 23px;`;
@@ -73,6 +82,7 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [nickname, setNickname] = useState("");
+  const nicknameRef = useRef("");
   const [additional, setAdditional] = useState({
     gender: "NONE",
     birthDate: "",
@@ -84,6 +94,12 @@ export default function Onboarding() {
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [nicknameCheck, setNicknameCheck] = useState({
+    status: "idle",
+    nickname: "",
+    message:
+      "온보딩 API가 닉네임 저장을 지원하지 않아 변경값은 저장되지 않습니다.",
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -93,6 +109,7 @@ export default function Onboarding() {
         if (!active) return;
         setProfile(data);
         setNickname(data.nickname);
+        nicknameRef.current = data.nickname;
         setAdditional({
           gender: data.gender ?? "NONE",
           birthDate: data.birthDate ?? "",
@@ -127,8 +144,62 @@ export default function Onboarding() {
         : [...current[key], value],
     }));
 
+  const changeNickname = (value) => {
+    setNickname(value);
+    nicknameRef.current = value;
+    setNicknameCheck({
+      status: "idle",
+      nickname: "",
+      message: "닉네임 중복 확인을 다시 해주세요.",
+    });
+  };
+
+  const verifyNickname = async () => {
+    if (nicknameCheck.status === "checking") return;
+    const requestedNickname = nickname.trim();
+    if (!requestedNickname) {
+      setNicknameCheck({
+        status: "error",
+        nickname: "",
+        message: "닉네임을 먼저 입력해주세요.",
+      });
+      return;
+    }
+
+    setNicknameCheck({ status: "checking", nickname: "", message: "" });
+    try {
+      const available = await checkNickname(requestedNickname);
+      if (nicknameRef.current.trim() !== requestedNickname) return;
+      setNicknameCheck({
+        status: available ? "available" : "unavailable",
+        nickname: available ? requestedNickname : "",
+        message: available
+          ? "사용 가능한 닉네임입니다."
+          : "이미 사용 중인 닉네임입니다.",
+      });
+    } catch {
+      if (nicknameRef.current.trim() !== requestedNickname) return;
+      setNicknameCheck({
+        status: "error",
+        nickname: "",
+        message: "닉네임 중복 확인에 실패했습니다. 다시 시도해주세요.",
+      });
+    }
+  };
+
   const submit = async (event) => {
     event.preventDefault();
+    if (
+      nicknameCheck.status !== "available" ||
+      nicknameCheck.nickname !== nickname.trim()
+    ) {
+      setNicknameCheck((current) => ({
+        ...current,
+        status: "error",
+        message: "닉네임 중복 확인을 해주세요.",
+      }));
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -159,15 +230,21 @@ export default function Onboarding() {
                   <Input
                     id="social-nickname"
                     value={nickname}
-                    onChange={(event) => setNickname(event.target.value)}
+                    onChange={(event) => changeNickname(event.target.value)}
                     autoComplete="nickname"
                   />
-                  <DuplicateButton type="button" disabled>중복 확인 준비 중</DuplicateButton>
+                  <DuplicateButton
+                    type="button"
+                    disabled={nicknameCheck.status === "checking"}
+                    onClick={verifyNickname}
+                  >
+                    {nicknameCheck.status === "checking" ? "확인 중" : "중복 확인"}
+                  </DuplicateButton>
                 </NicknameRow>
               </Field>
             </Info>
-            <Notice>
-              닉네임 변경과 중복 확인 API는 준비 중이며, 현재 온보딩 저장에는 반영되지 않습니다.
+            <Notice $status={nicknameCheck.status} aria-live="polite">
+              {nicknameCheck.message}
             </Notice>
             <AdditionalSignupInfo value={additional} onChange={setAdditional} />
             <SectionTitle>취향 설정</SectionTitle>

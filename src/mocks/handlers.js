@@ -10,6 +10,7 @@ import {
 import { mockUser, mockTokens } from "./data/mockUser.js";
 import { recentProducts } from "./data/recentProducts.js";
 import { DEFAULT_CATEGORIES } from "../data/categories.js";
+import { mockDuplicates } from "../data/signupOptions.js";
 
 // TODO: Swagger의 실제 endpoint로 변경
 const SIGNUP_PATH = apiUrl("auth/signup");
@@ -332,6 +333,20 @@ export const handlers = [
       status: 200,
       message: "이메일 중복 확인이 완료되었습니다.",
       data: { email, isAvailable: email !== mockUser.email },
+    });
+  }),
+
+  http.get(apiUrl("users/check-nickname"), ({ request }) => {
+    const nickname = new URL(request.url).searchParams.get("nickname") || "";
+    return HttpResponse.json({
+      status: 200,
+      message: "닉네임 중복 확인 결과입니다.",
+      data: {
+        nickname,
+        isAvailable:
+          nickname !== mockUser.nickname &&
+          !mockDuplicates.nickname.includes(nickname),
+      },
     });
   }),
 
