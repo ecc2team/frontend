@@ -145,27 +145,39 @@ export default function CategoryPage() {
       .then((items) => {
         const supported = selectSupportedCategories(items);
         setCategories(supported);
-        const requestedCode = isSupportedCategoryCode(routeCode)
-          ? routeCode
-          : isSupportedCategoryCode(legacyQueryCode)
-            ? legacyQueryCode
-            : supported[0]?.code || "";
-        setSelectedCode(requestedCode);
         setCategoryError("");
-
-        if (requestedCode && routeCode !== requestedCode) {
-          navigate(
-            `${categoryPath(requestedCode)}?page=${page}&sort=${encodeURIComponent(sort)}`,
-            { replace: true },
-          );
-        }
       })
       .catch((error) => {
         if (error.name !== "AbortError") setCategoryError(error.message);
       });
 
     return () => controller.abort();
-  }, [legacyQueryCode, navigate, page, routeCode, sort]);
+  }, []);
+
+  useEffect(() => {
+    if (categories.length === 0) return;
+    let active = true;
+    const requestedCode = isSupportedCategoryCode(routeCode)
+      ? routeCode
+      : isSupportedCategoryCode(legacyQueryCode)
+        ? legacyQueryCode
+        : categories[0].code;
+
+    queueMicrotask(() => {
+      if (active) setSelectedCode(requestedCode);
+    });
+
+    if (routeCode !== requestedCode) {
+      navigate(
+        `${categoryPath(requestedCode)}?page=${page}&sort=${encodeURIComponent(sort)}`,
+        { replace: true },
+      );
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [categories, legacyQueryCode, navigate, page, routeCode, sort]);
 
   useEffect(() => {
     if (!selectedCode) return undefined;
