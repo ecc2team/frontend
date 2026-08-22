@@ -5,6 +5,8 @@ import logoMark from "../assets/zeropick-mark.png";
 import logoWordmark from "../assets/zeropick-wordmark.png";
 import defaultProfile from "../assets/default-profile.png";
 import { logout as requestLogout } from "../api/auth";
+import useCategories from "../hooks/useCategories";
+import { categoryPath } from "../data/categories";
 
 const navItems = [
   ["카테고리", "/categories"],
@@ -13,15 +15,6 @@ const navItems = [
   ["비교함", "/compare"],
   ["최근 조회 상품", "/recent-products"],
   ["기록", "/records"],
-];
-
-const categoryItems = [
-  ["음료수", "/categories/drinks"],
-  ["단백질 바", "/categories/protein-bars"],
-  ["간식류", "/categories/snacks"],
-  ["냉동식품", "/categories/frozen-food"],
-  ["소스류", "/categories/sauces"],
-  ["기타", "/categories/other"],
 ];
 
 const Shell = styled.header`
@@ -273,6 +266,7 @@ const MobileMenu = styled.button`
 
 function Header() {
   const navigate = useNavigate();
+  const categories = useCategories();
   const [isLoggedIn, setIsLoggedIn] = useState(() =>
     Boolean(localStorage.getItem("accessToken")),
   );
@@ -302,9 +296,12 @@ function Header() {
                 <Link to={path}>{label}</Link>
                 <CategoryDropdown>
                   <CategoryDropdownPanel>
-                    {categoryItems.map(([categoryLabel, categoryPath]) => (
-                      <Link to={categoryPath} key={categoryPath}>
-                        {categoryLabel}
+                    {categories.map((category) => (
+                      <Link
+                        to={categoryPath(category.code)}
+                        key={category.code}
+                      >
+                        {category.name}
                       </Link>
                     ))}
                   </CategoryDropdownPanel>

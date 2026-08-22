@@ -17,17 +17,10 @@ import RecentProducts from "./pages/RecentProducts";
 import CategoryPage from "./pages/Category";
 
 const routes = [
-  ["/categories", "카테고리"],
   ["/recommendations", "추천"],
   ["/ranking", "랭킹"],
   ["/compare", "비교함"],
   ["/records", "기록"],
-  ["/categories/drinks", "음료수"],
-  ["/categories/protein-bars", "단백질 바"],
-  ["/categories/snacks", "간식류"],
-  ["/categories/frozen-food", "냉동식품"],
-  ["/categories/sauces", "소스류"],
-  ["/categories/other", "기타"],
 ];
 
 function App() {

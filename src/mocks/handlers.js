@@ -9,6 +9,7 @@ import {
 } from "./data/comparisonProducts.js";
 import { mockUser, mockTokens } from "./data/mockUser.js";
 import { recentProducts } from "./data/recentProducts.js";
+import { DEFAULT_CATEGORIES } from "../data/categories.js";
 
 // TODO: Swagger의 실제 endpoint로 변경
 const SIGNUP_PATH = apiUrl("auth/signup");
@@ -62,6 +63,13 @@ const createProductDetail = (product) => ({
   nutrition: product.nutrition,
   ingredientsAnalysis: product.ingredientsAnalysis,
 });
+
+const getMockCategoryProducts = (categoryCode) => {
+  if (categoryCode === "DRINK") return products.slice(0, 2);
+  if (categoryCode === "SNACK") return products.slice(2, 3);
+  if (categoryCode === "CHOCOLATE") return products.slice(3);
+  return [];
+};
 
 export const handlers = [
   http.get(apiUrl("users/me/recent-products"), () => {
@@ -131,6 +139,63 @@ export const handlers = [
     return HttpResponse.json({
       status: 200,
       message: "제품 검색 리스트 조회가 성공적으로 완료되었습니다.",
+      data: {
+        content,
+        pageInfo: {
+          pageNumber: page,
+          pageSize: size,
+          totalElements,
+          totalPages,
+          isLast: totalPages === 0 || page >= totalPages - 1,
+        },
+      },
+    });
+  }),
+
+  http.get(apiUrl("categories"), () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "카테고리 목록 조회 성공",
+      data: DEFAULT_CATEGORIES,
+    });
+  }),
+
+  http.get(apiUrl("categories/:category/best"), ({ params, request }) => {
+    const categoryCode = String(params.category).toUpperCase();
+    const size = Number(new URL(request.url).searchParams.get("size") ?? 5);
+    const data = getMockCategoryProducts(categoryCode)
+      .slice()
+      .sort((left, right) => Number(right.score) - Number(left.score))
+      .slice(0, size)
+      .map((product, index) => ({
+        rank: index + 1,
+        productId: product.productId,
+        productName: product.productName,
+        score: Number(product.score ?? 0),
+        viewCount: Number(product.viewCount ?? 0),
+        warningAdditive: Boolean(product.warningAdditive),
+      }));
+
+    return HttpResponse.json({
+      status: 200,
+      message: "카테고리 베스트 랭킹 조회가 성공적으로 완료되었습니다.",
+      data,
+    });
+  }),
+
+  http.get(apiUrl("categories/:category/products"), ({ params, request }) => {
+    const categoryCode = String(params.category).toUpperCase();
+    const url = new URL(request.url);
+    const page = Number(url.searchParams.get("page") ?? 0);
+    const size = Number(url.searchParams.get("size") ?? 20);
+    const categoryProducts = getMockCategoryProducts(categoryCode);
+    const totalElements = categoryProducts.length;
+    const totalPages = totalElements ? Math.ceil(totalElements / size) : 0;
+    const content = categoryProducts.slice(page * size, page * size + size);
+
+    return HttpResponse.json({
+      status: 200,
+      message: "카테고리 상품 목록 조회가 완료되었습니다.",
       data: {
         content,
         pageInfo: {

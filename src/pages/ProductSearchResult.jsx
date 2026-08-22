@@ -6,6 +6,7 @@ import Pagination from "../components/Pagination";
 import ProductSearchCard from "../components/ProductSearchCard";
 import SearchBar from "../components/SearchBar";
 import { searchProducts } from "../api/products";
+import { DEFAULT_CATEGORIES } from "../data/categories";
 
 const Page = styled.div`
   min-height: 100svh;
@@ -127,15 +128,7 @@ const Grid = styled.div`
     grid-template-columns: 1fr;
   }
 `;
-const categories = [
-  "전체",
-  "음료수",
-  "단백질 바",
-  "간식류",
-  "냉동식품",
-  "소스류",
-  "기타",
-];
+const categories = ["전체", ...DEFAULT_CATEGORIES.map(({ name }) => name)];
 
 export default function ProductSearchResult() {
   const [searchParams, setSearchParams] = useSearchParams();
