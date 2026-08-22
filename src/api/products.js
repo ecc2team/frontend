@@ -94,8 +94,8 @@ const normalizeProductDetail = (product) => {
     viewCount: Number.isFinite(viewCount) ? Math.max(0, viewCount) : 0,
     summary:
       typeof product.summary === "string" ? product.summary.trim() : "",
-    image: product.image ?? product.imageUrl ?? null,
-    imageUrl: product.image ?? product.imageUrl ?? null,
+    image: product.imageUrl ?? product.image ?? null,
+    imageUrl: product.imageUrl ?? product.image ?? null,
     warningAdditive: Boolean(product.warningAdditive),
     nutrition: product.nutrition ?? {},
     keyIngredients: (product.keyIngredients ?? cautionIngredients)

@@ -95,6 +95,12 @@ const ProductImage = styled.div`
     width: 100%;
     height: 100%;
     object-fit: contain;
+    object-position: center;
+  }
+  span {
+    color: #8f8797;
+    font-size: 12px;
+    text-align: center;
   }
 `;
 const ProductMeta = styled.div`
@@ -197,6 +203,20 @@ const metricRows = [
 const getMetric = (product, key) =>
   Number(product?.nutrition?.[key] ?? product?.[key] ?? 0);
 
+function ComparisonImage({ product }) {
+  const [failedImageUrl, setFailedImageUrl] = useState(null);
+
+  return product.imageUrl && failedImageUrl !== product.imageUrl ? (
+    <img
+      src={product.imageUrl}
+      alt={product.productName}
+      onError={() => setFailedImageUrl(product.imageUrl)}
+    />
+  ) : (
+    <span>제품 이미지 없음</span>
+  );
+}
+
 export default function ProductComparison() {
   const [selectedIds, setSelectedIds] = useState(getComparisonSelection);
   const [state, setState] = useState({
@@ -296,7 +316,7 @@ export default function ProductComparison() {
                     ×
                   </Remove>
                   <ProductImage>
-                    {product.imageUrl && <img src={product.imageUrl} alt="" />}
+                    <ComparisonImage product={product} />
                   </ProductImage>
                   <ProductMeta>
                     <ScoreBadge>{product.score}점</ScoreBadge>

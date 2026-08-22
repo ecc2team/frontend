@@ -251,9 +251,8 @@ export const handlers = [
     });
   }),
 
-  http.post(apiUrl("comparison-box/toggle"), async ({ request }) => {
-    const { productId: rawProductId } = await request.json();
-    const productId = Number(rawProductId);
+  http.post(apiUrl("comparison-box/:productId"), ({ params }) => {
+    const productId = Number(params.productId);
     const existingIndex = comparisonProducts.findIndex(
       (item) => item.productId === productId,
     );
@@ -268,7 +267,7 @@ export const handlers = [
     return HttpResponse.json({ status: 200, message: "비교함 변경 완료" });
   }),
 
-  http.delete(apiUrl("comparison-box/products/:productId"), ({ params }) => {
+  http.delete(apiUrl("comparison-box/:productId"), ({ params }) => {
     const productId = Number(params.productId);
     const index = comparisonProducts.findIndex(
       (item) => item.productId === productId,

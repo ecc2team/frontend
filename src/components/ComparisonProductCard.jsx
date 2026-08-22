@@ -1,3 +1,4 @@
+import { useState } from "react";
 import styled from "@emotion/styled";
 import removeCircle from "../assets/compare-remove-circle.svg";
 import removeLine from "../assets/compare-remove-line.svg";
@@ -75,6 +76,11 @@ const EmptyImage = styled.div`
   height: 122px;
   border-radius: 8px;
   background: #f3eff5;
+  color: #8f8797;
+  font-size: 12px;
+  display: grid;
+  place-items: center;
+  text-align: center;
 `;
 
 const Name = styled.h2`
@@ -116,6 +122,7 @@ function ComparisonProductCard({
   onSelect,
   onRemove,
 }) {
+  const [failedImageUrl, setFailedImageUrl] = useState(null);
   const badges = product.badges ?? product.tags ?? [];
 
   return (
@@ -136,10 +143,14 @@ function ComparisonProductCard({
         <img src={removeLine} alt="" />
       </RemoveButton>
       <ProductImage>
-        {product.imageUrl ? (
-          <img src={product.imageUrl} alt="" />
+        {product.imageUrl && failedImageUrl !== product.imageUrl ? (
+          <img
+            src={product.imageUrl}
+            alt={product.productName}
+            onError={() => setFailedImageUrl(product.imageUrl)}
+          />
         ) : (
-          <EmptyImage aria-hidden="true" />
+          <EmptyImage>제품 이미지 없음</EmptyImage>
         )}
       </ProductImage>
       <Name>{product.productName}</Name>

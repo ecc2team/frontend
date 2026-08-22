@@ -15,6 +15,18 @@ const requireAccessToken = () => {
   throw error;
 };
 
+const normalizeProductId = (productId) => {
+  const normalizedProductId = Number(productId);
+
+  if (!Number.isInteger(normalizedProductId) || normalizedProductId <= 0) {
+    const error = new Error("유효한 상품 ID가 필요합니다.");
+    error.status = 400;
+    throw error;
+  }
+
+  return normalizedProductId;
+};
+
 const throwRequestError = (response, result, fallbackMessage) => {
   const error = new Error(result?.message || fallbackMessage);
   error.status = response.status;
@@ -24,7 +36,7 @@ const throwRequestError = (response, result, fallbackMessage) => {
 const normalizeComparisonProduct = (product) => ({
   productId: product.productId,
   productName: product.productName,
-  imageUrl: product.imageUrl ?? null,
+  imageUrl: product.imageUrl ?? product.image ?? null,
   calories: Number(product.nutrition?.calories ?? product.calories) || 0,
   weight: product.weight ?? "",
   score: Number(product.score ?? 0),
@@ -40,11 +52,11 @@ const normalizeComparisonProduct = (product) => ({
 
 export async function addToComparisonList(product) {
   requireAccessToken();
-  const response = await authenticatedFetch(apiUrl("comparison-box/toggle"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ productId: product.productId }),
-  });
+  const productId = normalizeProductId(product?.productId);
+  const response = await authenticatedFetch(
+    apiUrl(`comparison-box/${productId}`),
+    { method: "POST" },
+  );
   const result = await readJson(response);
 
   if (!response.ok) {
@@ -56,8 +68,9 @@ export async function addToComparisonList(product) {
 
 export async function removeFromComparisonList(productId) {
   requireAccessToken();
+  const normalizedProductId = normalizeProductId(productId);
   const response = await authenticatedFetch(
-    apiUrl(`comparison-box/products/${encodeURIComponent(productId)}`),
+    apiUrl(`comparison-box/${normalizedProductId}`),
     { method: "DELETE" },
   );
   const result = await readJson(response);
