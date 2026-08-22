@@ -78,9 +78,22 @@ const Cell = styled.div`
   }
 `;
 const LabelCell = styled(Cell)`
-  gap: 12px;
   background: #fcfaff;
   font-weight: 700;
+`;
+const ComparisonLabel = styled.div`
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.4;
+`;
+const ComparisonIcon = styled.span`
+  width: 20px;
+  flex: 0 0 20px;
+  font-size: 19px;
+  line-height: 1;
+  text-align: center;
 `;
 const ProductHead = styled(Cell)`
   position: relative;
@@ -195,11 +208,24 @@ const Status = styled.div`
   font-size: 20px;
 `;
 
-const metricRows = [
-  ["🔥", "열량 (kcal)", "calories"],
-  ["◆", "당류 (g)", "sugar"],
-  ["▣", "나트륨 (mg)", "sodium"],
+const comparisonRows = [
+  { key: "calories", icon: "🔥", label: "열량 (kcal)" },
+  { key: "sugar", icon: "🍬", label: "당류 (g)" },
+  { key: "sodium", icon: "🧂", label: "나트륨 (mg)" },
+  { key: "allergy", icon: "⚠️", label: "알레르기 유발 물질" },
+  { key: "ingredients", icon: "🧪", label: "주요 성분" },
+  { key: "score", icon: "⭐", label: "ZeroPick 점수" },
 ];
+const metricRows = comparisonRows.slice(0, 3);
+
+function ComparisonRowLabel({ row }) {
+  return (
+    <ComparisonLabel>
+      <ComparisonIcon aria-hidden="true">{row.icon}</ComparisonIcon>
+      <span>{row.label}</span>
+    </ComparisonLabel>
+  );
+}
 
 const getMetric = (product, key) => {
   if (!product?.detailLoaded) return null;
@@ -326,7 +352,7 @@ export default function ProductComparison() {
   const maxValues = useMemo(
     () =>
       Object.fromEntries(
-        metricRows.map(([, , key]) => [
+        metricRows.map(({ key }) => [
           key,
           Math.max(
             ...products
@@ -425,25 +451,24 @@ export default function ProductComparison() {
                 </EmptyHead>
               ),
             )}
-            {metricRows.flatMap(([icon, label, key]) => [
-              <LabelCell key={`${key}-label`}>
-                <span>{icon}</span>
-                {label}
+            {metricRows.flatMap((row) => [
+              <LabelCell key={`${row.key}-label`}>
+                <ComparisonRowLabel row={row} />
               </LabelCell>,
               ...displayProducts.map((product, index) => {
-                const value = product ? getMetric(product, key) : null;
+                const value = product ? getMetric(product, row.key) : null;
                 const width =
-                  value == null || maxValues[key] === 0
+                  value == null || maxValues[row.key] === 0
                     ? 0
-                    : (value / maxValues[key]) * 100;
+                    : (value / maxValues[row.key]) * 100;
                 return (
-                  <Value key={`${key}-${product?.productId ?? index}`}>
+                  <Value key={`${row.key}-${product?.productId ?? index}`}>
                     {value == null ? (
                       "-"
                     ) : (
                       <>
                         <strong>
-                          {value.toFixed(key === "calories" ? 0 : 1)}
+                          {value.toFixed(row.key === "calories" ? 0 : 1)}
                         </strong>
                         <BarTrack>
                           <Bar $value={value} $width={width} />
@@ -454,7 +479,9 @@ export default function ProductComparison() {
                 );
               }),
             ])}
-            <LabelCell>⚠ 알레르기 유발 물질</LabelCell>
+            <LabelCell>
+              <ComparisonRowLabel row={comparisonRows[3]} />
+            </LabelCell>
             {displayProducts.map((product, index) => (
               <TextValue key={`allergy-${product?.productId ?? index}`}>
                 {product
@@ -466,7 +493,9 @@ export default function ProductComparison() {
                   : "-"}
               </TextValue>
             ))}
-            <LabelCell>❧ 주요 성분</LabelCell>
+            <LabelCell>
+              <ComparisonRowLabel row={comparisonRows[4]} />
+            </LabelCell>
             {displayProducts.map((product, index) => (
               <TextValue key={`ingredient-${product?.productId ?? index}`}>
                 {product
@@ -474,7 +503,9 @@ export default function ProductComparison() {
                   : "-"}
               </TextValue>
             ))}
-            <LabelCell>★ ZeroPick 점수</LabelCell>
+            <LabelCell>
+              <ComparisonRowLabel row={comparisonRows[5]} />
+            </LabelCell>
             {displayProducts.map((product, index) => (
               <TextValue key={`grade-${product?.productId ?? index}`}>
                 {product ? (
