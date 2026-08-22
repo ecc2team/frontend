@@ -6,6 +6,7 @@ import {
   getComparisonList,
   removeFromComparisonList,
 } from "../api/comparison-list";
+import { getProductDetail } from "../api/products";
 import {
   getComparisonSelection,
   saveComparisonSelection,
@@ -200,8 +201,47 @@ const metricRows = [
   ["▣", "나트륨 (mg)", "sodium"],
 ];
 
-const getMetric = (product, key) =>
-  Number(product?.nutrition?.[key] ?? product?.[key] ?? 0);
+const getMetric = (product, key) => {
+  if (!product?.detailLoaded) return null;
+
+  const rawValue = product.nutrition?.[key];
+  if (rawValue == null || rawValue === "") return null;
+
+  const value = Number(rawValue);
+  return Number.isFinite(value) ? value : null;
+};
+
+const getAnalysisIngredientNames = (analysis) =>
+  Object.values(analysis ?? {})
+    .filter(Array.isArray)
+    .flat()
+    .map((ingredient) =>
+      typeof ingredient === "string" ? ingredient : ingredient?.name,
+    )
+    .filter(Boolean)
+    .filter((name, index, names) => names.indexOf(name) === index);
+
+const mergeComparisonDetail = (comparisonProduct, detailProduct) => {
+  const analysisIngredientNames = getAnalysisIngredientNames(
+    detailProduct.ingredientsAnalysis,
+  );
+
+  return {
+    ...comparisonProduct,
+    ...detailProduct,
+    imageUrl: detailProduct.imageUrl ?? comparisonProduct.imageUrl ?? null,
+    keyIngredients:
+      detailProduct.keyIngredients?.length > 0
+        ? detailProduct.keyIngredients
+        : analysisIngredientNames,
+    allergicIngredients:
+      detailProduct.allergicIngredients ??
+      detailProduct.allergyFlags ??
+      comparisonProduct.allergicIngredients ??
+      [],
+    detailLoaded: true,
+  };
+};
 
 function ComparisonImage({ product }) {
   const [failedImageUrl, setFailedImageUrl] = useState(null);
@@ -227,21 +267,59 @@ export default function ProductComparison() {
 
   useEffect(() => {
     const controller = new AbortController();
-    getComparisonList({ signal: controller.signal })
-      .then((data) => {
+    let active = true;
+
+    async function loadComparisonProducts() {
+      try {
+        const data = await getComparisonList({ signal: controller.signal });
+        if (!active) return;
+
         const ids = new Set(selectedIds);
+        const comparisonProducts = data.products.filter((item) =>
+          ids.has(item.productId),
+        );
+        const detailResults = await Promise.allSettled(
+          comparisonProducts.map((product) =>
+            getProductDetail(product.productId, {
+              signal: controller.signal,
+            }),
+          ),
+        );
+
+        if (!active) return;
+
+        const products = comparisonProducts.map((product, index) => {
+          const detailResult = detailResults[index];
+
+          return detailResult.status === "fulfilled"
+            ? mergeComparisonDetail(product, detailResult.value)
+            : { ...product, detailLoaded: false };
+        });
+        const failedCount = detailResults.filter(
+          (result) => result.status === "rejected",
+        ).length;
+
         setState({
           status: "success",
-          products: data.products.filter((item) => ids.has(item.productId)),
-          error: "",
+          products,
+          error:
+            failedCount > 0
+              ? `일부 상품(${failedCount}개)의 상세 정보를 불러오지 못했습니다.`
+              : "",
         });
-      })
-      .catch((error) => {
+      } catch (error) {
         if (error.name !== "AbortError") {
           setState({ status: "error", products: [], error: error.message });
         }
-      });
-    return () => controller.abort();
+      }
+    }
+
+    loadComparisonProducts();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [selectedIds]);
 
   const products = state.products;
@@ -250,7 +328,12 @@ export default function ProductComparison() {
       Object.fromEntries(
         metricRows.map(([, , key]) => [
           key,
-          Math.max(...products.map((product) => getMetric(product, key)), 0),
+          Math.max(
+            ...products
+              .map((product) => getMetric(product, key))
+              .filter((value) => value != null),
+            0,
+          ),
         ]),
       ),
     [products],
