@@ -211,6 +211,14 @@ const Message = styled.p`
   text-align: center;
   color: ${({ $error }) => ($error ? "#c62828" : "#248a3d")};
 `;
+const FieldMessage = styled(Message)`
+  margin: -6px 0 0 182px;
+  text-align: left;
+
+  @media (max-width: 760px) {
+    margin-left: 0;
+  }
+`;
 const SocialDivider = styled.div`
   width: 78%;
   height: 1px;
@@ -276,6 +284,15 @@ export default function Signup({ onboarding = false }) {
   const [nicknameAvailable, setNicknameAvailable] = useState(false);
   const [selections, setSelections] = useState(initialSelections);
   const [message, setMessage] = useState({ text: "", error: false });
+  const [emailMessage, setEmailMessage] = useState({ text: "", error: false });
+  const [verificationMessage, setVerificationMessage] = useState({
+    text: "",
+    error: false,
+  });
+  const [nicknameMessage, setNicknameMessage] = useState({
+    text: "",
+    error: false,
+  });
   const [loading, setLoading] = useState(false);
   const [emailCode, setEmailCode] = useState("");
   const [emailCodeVerified, setEmailCodeVerified] = useState(false);
@@ -300,24 +317,27 @@ export default function Signup({ onboarding = false }) {
     if (resendSeconds > 0 || sendingCode) return;
     const requestedEmail = email.trim();
     if (!requestedEmail) {
-      setMessage({ text: "이메일을 먼저 입력해주세요.", error: true });
+      setVerificationMessage({
+        text: "이메일을 먼저 입력해주세요.",
+        error: true,
+      });
       return false;
     }
 
     setSendingCode(true);
-    setMessage({ text: "", error: false });
+    setVerificationMessage({ text: "", error: false });
     try {
       const result = await sendEmailCode(requestedEmail);
       if (currentEmailRef.current.trim() !== requestedEmail) return false;
       setResendSeconds(60);
       setEmailCodeVerified(false);
-      setMessage({
+      setVerificationMessage({
         text: result?.message || "인증번호를 전송했습니다.",
         error: false,
       });
       return true;
     } catch (error) {
-      setMessage({ text: error.message, error: true });
+      setVerificationMessage({ text: error.message, error: true });
       return false;
     } finally {
       setSendingCode(false);
@@ -330,16 +350,19 @@ export default function Signup({ onboarding = false }) {
       currentEmailRef.current = value;
       setEmailCodeVerified(false);
       setEmailCode("");
+      setEmailMessage({ text: "", error: false });
+      setVerificationMessage({ text: "", error: false });
     }
     if (field === "nickname") {
       currentNicknameRef.current = value;
       setNicknameChecked(false);
       setNicknameAvailable(false);
+      setNicknameMessage({ text: "", error: false });
     }
   };
   const verifyCode = async () => {
     if (!values.email.trim() || !emailCode.trim() || verifyingCode) {
-      setMessage({
+      setVerificationMessage({
         text: "이메일과 인증번호를 모두 입력해주세요.",
         error: true,
       });
@@ -348,13 +371,13 @@ export default function Signup({ onboarding = false }) {
 
     const requestedEmail = values.email.trim();
     setVerifyingCode(true);
-    setMessage({ text: "", error: false });
+    setVerificationMessage({ text: "", error: false });
     try {
       const result = await verifyEmailCode(requestedEmail, emailCode.trim());
       if (currentEmailRef.current.trim() !== requestedEmail) return;
       const success = result?.data?.emailVerified === true;
       setEmailCodeVerified(success);
-      setMessage({
+      setVerificationMessage({
         text: success
           ? result?.message || "이메일 인증이 완료되었습니다."
           : "인증번호가 올바르지 않습니다.",
@@ -366,7 +389,7 @@ export default function Signup({ onboarding = false }) {
         setEmailCode("");
         setResendSeconds(0);
       }
-      setMessage({
+      setVerificationMessage({
         text:
           error.message ||
           (error.status === 409
@@ -398,29 +421,29 @@ export default function Signup({ onboarding = false }) {
       if (field === "nickname") {
         setNicknameChecked(true);
         setNicknameAvailable(available === true);
+        setNicknameMessage({
+          text: available
+            ? "사용 가능한 닉네임입니다."
+            : "이미 사용 중인 닉네임입니다.",
+          error: !available,
+        });
       }
       setVerified((prev) => ({ ...prev, [field]: available }));
-      if (field === "email" && available) {
-        await sendVerificationCode(values.email);
-        return;
+      if (field === "email") {
+        setEmailMessage({
+          text: available ? "사용할 수 있습니다." : "이미 사용 중인 값입니다.",
+          error: !available,
+        });
+        if (available) await sendVerificationCode(values.email);
       }
-      setMessage({
-        text:
-          field === "nickname"
-            ? available
-              ? "사용 가능한 닉네임입니다."
-              : "이미 사용 중인 닉네임입니다."
-            : available
-              ? "사용할 수 있습니다."
-              : "이미 사용 중인 값입니다.",
-        error: !available,
-      });
     } catch (error) {
       if (field === "nickname") {
         setNicknameChecked(false);
         setNicknameAvailable(false);
+        setNicknameMessage({ text: error.message, error: true });
+      } else {
+        setEmailMessage({ text: error.message, error: true });
       }
-      setMessage({ text: error.message, error: true });
     } finally {
       setCheckingField(null);
     }
@@ -438,7 +461,10 @@ export default function Signup({ onboarding = false }) {
       !isSocialOnboarding &&
       (!nicknameChecked || !nicknameAvailable)
     ) {
-      setMessage({ text: "닉네임 중복 확인을 해주세요.", error: true });
+      setMessage({
+        text: "닉네임 중복 확인을 해주세요.",
+        error: true,
+      });
       return;
     }
     if (
@@ -454,7 +480,10 @@ export default function Signup({ onboarding = false }) {
       return;
     }
     if (!onboarding && !isSocialOnboarding && !emailCodeVerified) {
-      setMessage({ text: "이메일 인증을 완료해주세요.", error: true });
+      setMessage({
+        text: "이메일 인증을 완료해주세요.",
+        error: true,
+      });
       return;
     }
     setLoading(true);
@@ -551,50 +580,70 @@ export default function Signup({ onboarding = false }) {
                       </VerifyArea>
                     ))}
                 </Field>
+                {key === "email" && emailMessage.text && (
+                  <FieldMessage role="status" $error={emailMessage.error}>
+                    {emailMessage.text}
+                  </FieldMessage>
+                )}
+                {key === "nickname" && nicknameMessage.text && (
+                  <FieldMessage role="status" $error={nicknameMessage.error}>
+                    {nicknameMessage.text}
+                  </FieldMessage>
+                )}
                 {key === "email" && !isSocialOnboarding && !onboarding && (
-                  <VerificationCodeRow>
-                    <VerificationCodeLabel htmlFor="email-verification-code">
-                      인증 번호
-                    </VerificationCodeLabel>
-                    <VerificationInput
-                      id="email-verification-code"
-                      type="text"
-                      inputMode="numeric"
-                      value={emailCode}
-                      onChange={(event) => setEmailCode(event.target.value)}
-                      placeholder="인증 번호를 입력해주세요"
-                      autoComplete="one-time-code"
-                    />
-                    <VerificationActions>
-                      <ResendArea>
-                        <ResendButton
+                  <>
+                    <VerificationCodeRow>
+                      <VerificationCodeLabel htmlFor="email-verification-code">
+                        인증 번호
+                      </VerificationCodeLabel>
+                      <VerificationInput
+                        id="email-verification-code"
+                        type="text"
+                        inputMode="numeric"
+                        value={emailCode}
+                        onChange={(event) => setEmailCode(event.target.value)}
+                        placeholder="인증 번호를 입력해주세요"
+                        autoComplete="one-time-code"
+                      />
+                      <VerificationActions>
+                        <ResendArea>
+                          <ResendButton
+                            type="button"
+                            disabled={resendSeconds > 0 || sendingCode}
+                            onClick={() => sendVerificationCode()}
+                          >
+                            {sendingCode ? "전송 중" : "재전송"}
+                          </ResendButton>
+                          <Countdown aria-live="polite">
+                            {resendSeconds > 0
+                              ? `00:${String(resendSeconds).padStart(2, "0")}`
+                              : ""}
+                          </Countdown>
+                        </ResendArea>
+                        <VerificationButton
                           type="button"
-                          disabled={resendSeconds > 0 || sendingCode}
-                          onClick={() => sendVerificationCode()}
+                          $secondary
+                          disabled={verifyingCode}
+                          onClick={verifyCode}
                         >
-                          {sendingCode ? "전송 중" : "재전송"}
-                        </ResendButton>
-                        <Countdown aria-live="polite">
-                          {resendSeconds > 0
-                            ? `00:${String(resendSeconds).padStart(2, "0")}`
-                            : ""}
-                        </Countdown>
-                      </ResendArea>
-                      <VerificationButton
-                        type="button"
-                        $secondary
-                        disabled={verifyingCode}
-                        onClick={verifyCode}
+                          {verifyingCode ? "확인 중" : "인증"}
+                        </VerificationButton>
+                        {emailCodeVerified && (
+                          <Check>
+                            <img src={checkIcon} alt="이메일 인증 완료" />
+                          </Check>
+                        )}
+                      </VerificationActions>
+                    </VerificationCodeRow>
+                    {verificationMessage.text && (
+                      <FieldMessage
+                        role="status"
+                        $error={verificationMessage.error}
                       >
-                        {verifyingCode ? "확인 중" : "인증"}
-                      </VerificationButton>
-                      {emailCodeVerified && (
-                        <Check>
-                          <img src={checkIcon} alt="이메일 인증 완료" />
-                        </Check>
-                      )}
-                    </VerificationActions>
-                  </VerificationCodeRow>
+                        {verificationMessage.text}
+                      </FieldMessage>
+                    )}
+                  </>
                 )}
               </Fragment>
             ))}
