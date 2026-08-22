@@ -111,7 +111,56 @@ export const handlers = [
     return HttpResponse.json({ status: 200, message: "최근 조회 상품 삭제 완료" });
   }),
 
-  // 제품 검색
+  // 정렬 및 페이지네이션을 지원하는 전체 제품 검색
+  http.get(apiUrl("products"), ({ request }) => {
+    const url = new URL(request.url);
+    const keyword = (url.searchParams.get("keyword") ?? "")
+      .trim()
+      .toLowerCase();
+    const page = Number(url.searchParams.get("page") ?? 0);
+    const size = Number(url.searchParams.get("size") ?? 20);
+    const sort = url.searchParams.get("sort") ?? "recommended";
+    const filteredProducts = products
+      .filter((product) => product.productName.toLowerCase().includes(keyword))
+      .slice();
+
+    if (sort === "latest") {
+      filteredProducts.sort((left, right) => right.productId - left.productId);
+    } else if (sort === "name") {
+      filteredProducts.sort((left, right) =>
+        left.productName.localeCompare(right.productName, "ko-KR"),
+      );
+    } else if (sort === "popular" || sort === "views") {
+      filteredProducts.sort(
+        (left, right) => Number(right.viewCount) - Number(left.viewCount),
+      );
+    } else {
+      filteredProducts.sort(
+        (left, right) => Number(right.score) - Number(left.score),
+      );
+    }
+
+    const totalElements = filteredProducts.length;
+    const totalPages = totalElements ? Math.ceil(totalElements / size) : 0;
+    const content = filteredProducts.slice(page * size, page * size + size);
+
+    return HttpResponse.json({
+      status: 200,
+      message: "전체 상품 리스트 조회가 완료되었습니다.",
+      data: {
+        content: content.map(createSearchResult),
+        pageInfo: {
+          page,
+          size,
+          totalElements,
+          totalPages,
+          last: totalPages === 0 || page >= totalPages - 1,
+        },
+      },
+    });
+  }),
+
+  // 기존 키워드 검색
   http.get(apiUrl("products/search"), ({ request }) => {
     const url = new URL(request.url);
 

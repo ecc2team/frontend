@@ -5,12 +5,14 @@ import Header from "../components/Header";
 import Pagination from "../components/Pagination";
 import ProductSearchCard from "../components/ProductSearchCard";
 import SearchBar from "../components/SearchBar";
+import SortSection from "../components/SortSection";
 import { searchProducts } from "../api/products";
 import { getCategoryProducts } from "../api/categories";
 import {
   DEFAULT_CATEGORIES,
   isSupportedCategoryCode,
 } from "../data/categories";
+import { SORT_VALUES } from "../data/sortOptions";
 
 const Page = styled.div`
   min-height: 100svh;
@@ -50,80 +52,6 @@ const Category = styled.button`
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-`;
-const SortPanel = styled.div`
-  width: min(1028px, 100%);
-  min-height: 68px;
-  margin: 0 auto 17px;
-  padding: 13px 38px;
-  border: 1px solid #f3deff;
-  border-radius: 10px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  gap: 35px;
-
-  @media (max-width: 600px) {
-    padding-inline: 20px;
-    gap: 18px;
-  }
-`;
-const SortLabel = styled.span`
-  flex: 0 0 auto;
-  font-size: 18px;
-  font-weight: 700;
-`;
-const SortOptions = styled.div`
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: clamp(14px, 2.4vw, 32px);
-  overflow-x: auto;
-`;
-const SortOption = styled.label`
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #000;
-  font-size: 16px;
-  white-space: nowrap;
-  cursor: pointer;
-
-  input {
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    margin: 0;
-    border: 1px solid #cfc9d2;
-    border-radius: 50%;
-    background: #fff;
-    display: grid;
-    place-content: center;
-    cursor: pointer;
-  }
-
-  input::before {
-    content: "";
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #a032be;
-    transform: scale(0);
-  }
-
-  input:checked {
-    border-color: #a032be;
-  }
-
-  input:checked::before {
-    transform: scale(1);
-  }
-
-  input:focus-visible {
-    outline: 3px solid #df6bff;
-    outline-offset: 2px;
-  }
 `;
 const ResultPanel = styled.section`
   padding: 0;
@@ -168,15 +96,6 @@ const Grid = styled.div`
     grid-template-columns: 1fr;
   }
 `;
-const SORT_OPTIONS = [
-  ["recommended", "추천순"],
-  ["latest", "최신순"],
-  ["name", "가나다순"],
-  ["popular", "인기순"],
-  ["views", "조회순"],
-];
-const SORT_CODES = new Set(SORT_OPTIONS.map(([code]) => code));
-
 export default function ProductSearchResult() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = (searchParams.get("query") || "").trim();
@@ -187,7 +106,7 @@ export default function ProductSearchResult() {
     ? requestedCategory
     : "";
   const requestedSort = searchParams.get("sort") || "recommended";
-  const sort = SORT_CODES.has(requestedSort) ? requestedSort : "recommended";
+  const sort = SORT_VALUES.has(requestedSort) ? requestedSort : "recommended";
   const retryKey = searchParams.get("retry") || "";
   const [state, setState] = useState({
     status: "idle",
@@ -210,7 +129,13 @@ export default function ProductSearchResult() {
           keyword: query,
           signal: controller.signal,
         })
-      : searchProducts({ query, page, size: 20, signal: controller.signal });
+      : searchProducts({
+          query,
+          page,
+          size: 20,
+          sort,
+          signal: controller.signal,
+        });
 
     request
       .then((data) => {
@@ -303,25 +228,7 @@ export default function ProductSearchResult() {
             </Category>
           ))}
         </Categories>
-        {category && (
-          <SortPanel>
-            <SortLabel id="product-sort-label">정렬 기준</SortLabel>
-            <SortOptions role="radiogroup" aria-labelledby="product-sort-label">
-              {SORT_OPTIONS.map(([code, label]) => (
-                <SortOption key={code}>
-                  <input
-                    type="radio"
-                    name="product-sort"
-                    value={code}
-                    checked={sort === code}
-                    onChange={() => changeSort(code)}
-                  />
-                  <span>{label}</span>
-                </SortOption>
-              ))}
-            </SortOptions>
-          </SortPanel>
-        )}
+        <SortSection value={sort} onChange={changeSort} />
         <ResultPanel ref={resultsRef}>
           <Count>
             {query

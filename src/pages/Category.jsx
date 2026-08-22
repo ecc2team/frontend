@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import Pagination from "../components/Pagination";
 import ProductSearchCard from "../components/ProductSearchCard";
+import SortSection from "../components/SortSection";
 import {
   getCategories,
   getCategoryBestProducts,
@@ -14,15 +15,9 @@ import {
   isSupportedCategoryCode,
   selectSupportedCategories,
 } from "../data/categories";
+import { SORT_VALUES } from "../data/sortOptions";
 
 const PAGE_SIZE = 20;
-const SORT_OPTIONS = [
-  ["recommended", "추천순"],
-  ["latest", "최신순"],
-  ["name", "가나다순"],
-  ["popular", "인기순"],
-  ["views", "조회순"],
-];
 
 const Page = styled.div`
   min-height: 100svh;
@@ -60,75 +55,6 @@ const Category = styled.button`
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-`;
-const SortPanel = styled.div`
-  width: min(1028px, 100%);
-  min-height: 68px;
-  margin: 24px auto 17px;
-  padding: 13px 38px;
-  border: 1px solid #f3deff;
-  border-radius: 10px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  gap: 35px;
-`;
-const SortLabel = styled.span`
-  flex: 0 0 auto;
-  font-size: 18px;
-  font-weight: 700;
-`;
-const SortOptions = styled.div`
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: clamp(14px, 2.4vw, 32px);
-  overflow-x: auto;
-`;
-const SortOption = styled.label`
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #000;
-  font-size: 16px;
-  white-space: nowrap;
-  cursor: pointer;
-
-  input {
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    margin: 0;
-    border: 1px solid #cfc9d2;
-    border-radius: 50%;
-    background: #fff;
-    display: grid;
-    place-content: center;
-    cursor: pointer;
-  }
-
-  input::before {
-    content: "";
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #a032be;
-    transform: scale(0);
-  }
-
-  input:checked {
-    border-color: #a032be;
-  }
-
-  input:checked::before {
-    transform: scale(1);
-  }
-
-  input:focus-visible {
-    outline: 3px solid #df6bff;
-    outline-offset: 2px;
-  }
 `;
 const SectionTitle = styled.h1`
   margin: 24px 0 0;
@@ -172,7 +98,8 @@ export default function CategoryPage() {
   const legacyQueryCode = searchParams.get("category")?.toUpperCase() || "";
   const parsedPage = Number(searchParams.get("page") || 0);
   const page = Number.isInteger(parsedPage) && parsedPage >= 0 ? parsedPage : 0;
-  const sort = searchParams.get("sort") || "recommended";
+  const requestedSort = searchParams.get("sort") || "recommended";
+  const sort = SORT_VALUES.has(requestedSort) ? requestedSort : "recommended";
   const [categories, setCategories] = useState([]);
   const [selectedCode, setSelectedCode] = useState("");
   const [categoryError, setCategoryError] = useState("");
@@ -363,26 +290,7 @@ export default function CategoryPage() {
                 <SectionStatus>베스트 상품이 없습니다.</SectionStatus>
               ))}
 
-            <SortPanel>
-              <SortLabel id="category-sort-label">정렬 기준</SortLabel>
-              <SortOptions
-                role="radiogroup"
-                aria-labelledby="category-sort-label"
-              >
-                {SORT_OPTIONS.map(([value, label]) => (
-                  <SortOption key={value}>
-                    <input
-                      type="radio"
-                      name="category-sort"
-                      value={value}
-                      checked={sort === value}
-                      onChange={() => changeSort(value)}
-                    />
-                    <span>{label}</span>
-                  </SortOption>
-                ))}
-              </SortOptions>
-            </SortPanel>
+            <SortSection value={sort} onChange={changeSort} afterBest />
 
             <SectionTitle ref={resultsRef}>전체 상품</SectionTitle>
             {productsState.status === "loading" && (
