@@ -26,20 +26,37 @@ export async function getCategoryProducts(
   sort = "recommended",
   options,
 ) {
-  const params = new URLSearchParams({
-    page: String(page),
-    size: String(size),
-    sort,
-  });
+  const { keyword = "", ...requestOptions } = options ?? {};
+  const params = new URLSearchParams();
+  if (keyword.trim()) params.set("keyword", keyword.trim());
+  params.set("page", String(page));
+  params.set("size", String(size));
+  params.set("sort", sort);
   const data = await categoryGet(
     `categories/${encodeURIComponent(categoryCode)}/products?${params}`,
-    options,
+    requestOptions,
   );
 
   if (!Array.isArray(data?.content) || !data?.pageInfo) {
     throw new Error("카테고리 상품 응답 형식이 올바르지 않습니다.");
   }
-  return data;
+  return {
+    ...data,
+    content: data.content.map((product) => ({
+      ...product,
+      productId: product.productId,
+      productName: product.productName ?? product.name,
+      score: Number(product.score ?? 0),
+      calories: product.calories ?? product.nutrition?.calories ?? null,
+      sugar: product.sugar ?? product.nutrition?.sugar ?? null,
+      warningAdditive: Boolean(product.warningAdditive),
+      keyIngredients: Array.isArray(product.keyIngredients)
+        ? product.keyIngredients
+        : [],
+      viewCount: Number(product.viewCount ?? 0),
+      imageUrl: product.imageUrl ?? product.image ?? null,
+    })),
+  };
 }
 
 export async function getCategoryBestProducts(

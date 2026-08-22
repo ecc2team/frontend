@@ -34,7 +34,14 @@ function App() {
         <Route path="/find-account" element={<FindAccount />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/onboarding" element={<Onboarding />} />
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute>
+              <Onboarding />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/oauth/kakao/callback"
           element={<OAuthCallback provider="kakao" />}

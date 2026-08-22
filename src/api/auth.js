@@ -3,6 +3,12 @@ import { OAUTH_CONFIG } from "../config/oauth";
 
 const socialCallbackRequests = new Map();
 
+const toOptionalNumber = (value) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+};
+
 async function authRequest(path, options) {
   const response = await fetch(apiUrl(path), {
     ...options,
@@ -60,15 +66,26 @@ export function loginWithGoogle(authCode) {
 }
 
 export function submitSocialOnboarding(onboarding) {
+  const profile = onboarding.profile ?? {};
+  const height = toOptionalNumber(profile.height);
+  const weight = toOptionalNumber(profile.weight);
+  const normalizedProfile = {
+    gender: profile.gender || "NONE",
+    ...(profile.birthDate ? { birthDate: profile.birthDate } : {}),
+    ...(height !== undefined ? { height } : {}),
+    ...(weight !== undefined ? { weight } : {}),
+    ...(profile.activityLevel
+      ? { activityLevel: profile.activityLevel }
+      : {}),
+  };
   return authRequest("auth/onboarding", {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
-      onboarding: {
-        preferredCategories: onboarding.preferredCategories ?? [],
-        dislikedIngredients: onboarding.dislikedIngredients ?? [],
-        allergyFlags: onboarding.allergyFlags ?? [],
-      },
+      profile: normalizedProfile,
+      preferredCategories: onboarding.preferredCategories ?? [],
+      dislikedIngredients: onboarding.dislikedIngredients ?? [],
+      allergyFlags: onboarding.allergyFlags ?? [],
     }),
   });
 }
