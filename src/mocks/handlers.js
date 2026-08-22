@@ -387,6 +387,7 @@ export const handlers = [
   http.post(apiUrl("auth/onboarding"), async ({ request }) => {
     const onboarding = await request.json();
     if (
+      typeof onboarding.profile !== "object" ||
       !Array.isArray(onboarding.preferredCategories) ||
       !Array.isArray(onboarding.dislikedIngredients) ||
       !Array.isArray(onboarding.allergyFlags)

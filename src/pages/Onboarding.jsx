@@ -3,6 +3,7 @@ import styled from "@emotion/styled";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import PreferenceRow from "../components/PreferenceRow";
+import AdditionalSignupInfo from "../components/AdditionalSignupInfo";
 import { signupOptions } from "../data/signupOptions";
 import { getProfile } from "../api/profile";
 import { submitSocialOnboarding } from "../api/auth";
@@ -72,6 +73,13 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [nickname, setNickname] = useState("");
+  const [additional, setAdditional] = useState({
+    gender: "NONE",
+    birthDate: "",
+    height: "",
+    weight: "",
+    activityLevel: "",
+  });
   const [selections, setSelections] = useState(emptySelections);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
@@ -85,6 +93,13 @@ export default function Onboarding() {
         if (!active) return;
         setProfile(data);
         setNickname(data.nickname);
+        setAdditional({
+          gender: data.gender ?? "NONE",
+          birthDate: data.birthDate ?? "",
+          height: data.height ?? "",
+          weight: data.weight ?? "",
+          activityLevel: data.activityLevel ?? "",
+        });
         setSelections({
           preferredCategories: data.preferredCategories,
           dislikedIngredients: data.dislikedIngredients,
@@ -117,7 +132,7 @@ export default function Onboarding() {
     setSaving(true);
     setError("");
     try {
-      await submitSocialOnboarding(selections);
+      await submitSocialOnboarding({ ...selections, profile: additional });
       navigate("/", { replace: true });
     } catch (requestError) {
       setError(requestError.message);
@@ -154,6 +169,7 @@ export default function Onboarding() {
             <Notice>
               닉네임 변경과 중복 확인 API는 준비 중이며, 현재 온보딩 저장에는 반영되지 않습니다.
             </Notice>
+            <AdditionalSignupInfo value={additional} onChange={setAdditional} />
             <SectionTitle>취향 설정</SectionTitle>
             <Preferences>
               {signupOptions.map((group) => (
