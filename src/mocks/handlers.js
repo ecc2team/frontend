@@ -166,7 +166,22 @@ export const handlers = [
     const url = new URL(request.url);
     const page = Number(url.searchParams.get("page") ?? 0);
     const size = Number(url.searchParams.get("size") ?? 20);
-    const categoryProducts = getMockCategoryProducts(categoryCode);
+    const keyword = (url.searchParams.get("keyword") ?? "").toLowerCase();
+    const sort = url.searchParams.get("sort") ?? "recommended";
+    const categoryProducts = getMockCategoryProducts(categoryCode)
+      .filter((product) => product.productName.toLowerCase().includes(keyword))
+      .slice();
+    if (sort === "latest") {
+      categoryProducts.sort((left, right) => right.productId - left.productId);
+    } else if (sort === "name") {
+      categoryProducts.sort((left, right) =>
+        left.productName.localeCompare(right.productName, "ko-KR"),
+      );
+    } else if (sort === "popular" || sort === "views") {
+      categoryProducts.sort(
+        (left, right) => Number(right.viewCount) - Number(left.viewCount),
+      );
+    }
     const totalElements = categoryProducts.length;
     const totalPages = totalElements ? Math.ceil(totalElements / size) : 0;
     const content = categoryProducts.slice(page * size, page * size + size);

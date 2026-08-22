@@ -6,7 +6,11 @@ import Pagination from "../components/Pagination";
 import ProductSearchCard from "../components/ProductSearchCard";
 import SearchBar from "../components/SearchBar";
 import { searchProducts } from "../api/products";
-import { DEFAULT_CATEGORIES } from "../data/categories";
+import { getCategoryProducts } from "../api/categories";
+import {
+  DEFAULT_CATEGORIES,
+  isSupportedCategoryCode,
+} from "../data/categories";
 
 const Page = styled.div`
   min-height: 100svh;
@@ -35,7 +39,7 @@ const Categories = styled.div`
   gap: clamp(12px, 3.45vw, 50px);
   overflow-x: auto;
 `;
-const Category = styled.span`
+const Category = styled.button`
   flex: 0 0 auto;
   padding: 14px 22px;
   border: 1px solid #df6bff;
@@ -45,6 +49,7 @@ const Category = styled.span`
   font-size: 20px;
   font-weight: 700;
   white-space: nowrap;
+  cursor: pointer;
 `;
 const SortPanel = styled.div`
   width: min(1028px, 100%);
@@ -128,13 +133,26 @@ const Grid = styled.div`
     grid-template-columns: 1fr;
   }
 `;
-const categories = ["전체", ...DEFAULT_CATEGORIES.map(({ name }) => name)];
+const SORT_OPTIONS = [
+  ["recommended", "추천순"],
+  ["latest", "최신순"],
+  ["name", "가나다순"],
+  ["popular", "인기순"],
+  ["views", "조회순"],
+];
+const SORT_CODES = new Set(SORT_OPTIONS.map(([code]) => code));
 
 export default function ProductSearchResult() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = (searchParams.get("query") || "").trim();
   const parsedPage = Number(searchParams.get("page") || 0);
   const page = Number.isInteger(parsedPage) && parsedPage >= 0 ? parsedPage : 0;
+  const requestedCategory = (searchParams.get("category") || "").toUpperCase();
+  const category = isSupportedCategoryCode(requestedCategory)
+    ? requestedCategory
+    : "";
+  const requestedSort = searchParams.get("sort") || "recommended";
+  const sort = SORT_CODES.has(requestedSort) ? requestedSort : "recommended";
   const retryKey = searchParams.get("retry") || "";
   const [state, setState] = useState({
     status: "idle",
@@ -142,7 +160,6 @@ export default function ProductSearchResult() {
     pageInfo: null,
     error: "",
   });
-  const [sortBy, setSortBy] = useState("latest");
   const resultsRef = useRef(null);
 
   useEffect(() => {
@@ -153,7 +170,14 @@ export default function ProductSearchResult() {
       if (active)
         setState((previous) => ({ ...previous, status: "loading", error: "" }));
     });
-    searchProducts({ query, page, size: 20, signal: controller.signal })
+    const request = category
+      ? getCategoryProducts(category, page, 20, sort, {
+          keyword: query,
+          signal: controller.signal,
+        })
+      : searchProducts({ query, page, size: 20, signal: controller.signal });
+
+    request
       .then((data) => {
         if (active)
           setState({
@@ -176,16 +200,44 @@ export default function ProductSearchResult() {
       active = false;
       controller.abort();
     };
-  }, [query, page, retryKey]);
+  }, [category, query, page, retryKey, sort]);
 
-  const search = (nextQuery) =>
-    setSearchParams(nextQuery ? { query: nextQuery } : {});
+  const search = (nextQuery) => {
+    if (!nextQuery) {
+      setSearchParams({});
+      return;
+    }
+    setSearchParams({
+      query: nextQuery,
+      ...(category ? { category } : {}),
+      sort,
+      page: "0",
+    });
+  };
+  const changeCategory = (nextCategory) =>
+    setSearchParams({
+      query,
+      ...(nextCategory ? { category: nextCategory } : {}),
+      sort,
+      page: "0",
+    });
   const changePage = (nextPage) => {
-    setSearchParams({ query, page: String(nextPage) });
+    setSearchParams({
+      query,
+      ...(category ? { category } : {}),
+      sort,
+      page: String(nextPage),
+    });
     resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const retry = () =>
-    setSearchParams({ query, page: String(page), retry: String(Date.now()) });
+    setSearchParams({
+      query,
+      ...(category ? { category } : {}),
+      sort,
+      page: String(page),
+      retry: String(Date.now()),
+    });
   const displayStatus = query ? state.status : "idle";
   return (
     <Page>
@@ -195,9 +247,17 @@ export default function ProductSearchResult() {
           <SearchBar key={query} initialQuery={query} onSearch={search} large />
         </SearchWrap>
         <Categories aria-label="제품 카테고리">
-          {categories.map((category) => (
-            <Category key={category} $active={category === "전체"}>
-              {category}
+          <Category type="button" $active={!category} onClick={() => changeCategory("")}>
+            전체
+          </Category>
+          {DEFAULT_CATEGORIES.map(({ code, name }) => (
+            <Category
+              type="button"
+              key={code}
+              $active={category === code}
+              onClick={() => changeCategory(code)}
+            >
+              {name}
             </Category>
           ))}
         </Categories>
@@ -205,11 +265,19 @@ export default function ProductSearchResult() {
           <SortLabel htmlFor="product-sort">정렬 기준</SortLabel>
           <SortSelect
             id="product-sort"
-            value={sortBy}
-            onChange={(event) => setSortBy(event.target.value)}
+            value={sort}
+            onChange={(event) =>
+              setSearchParams({
+                query,
+                ...(category ? { category } : {}),
+                sort: event.target.value,
+                page: "0",
+              })
+            }
           >
-            <option value="latest">최신순</option>
-            <option value="ranking">랭킹순 (평점 높은 순)</option>
+            {SORT_OPTIONS.map(([code, label]) => (
+              <option key={code} value={code}>{label}</option>
+            ))}
           </SortSelect>
         </SortPanel>
         <ResultPanel ref={resultsRef}>
