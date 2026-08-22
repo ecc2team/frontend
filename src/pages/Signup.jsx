@@ -93,6 +93,7 @@ const VerifyArea = styled.div`
 `;
 const Verify = styled.button`
   width: 118px;
+  flex-shrink: 0;
   height: 45px;
   padding: 0;
   border: 1px solid #a032be;
@@ -514,7 +515,9 @@ export default function Signup({ onboarding = false }) {
                         >
                           {checkingField === key ? "확인 중" : "중복 확인"}
                         </Verify>
-                        {verified[key] && (
+                        {((key === "email" && verified.email === true) ||
+                          (key === "nickname" &&
+                            verified.nickname === true)) && (
                           <Check>
                             <img src={checkIcon} alt="사용 가능" />
                           </Check>
