@@ -3,15 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import SearchBar from "../components/SearchBar";
 import heroImage from "../assets/zeropick-hero.png";
-
-const categories = [
-  ["음료수", "/categories/drinks"],
-  ["단백질 바", "/categories/protein-bars"],
-  ["간식류", "/categories/snacks"],
-  ["냉동식품", "/categories/frozen-food"],
-  ["소스류", "/categories/sauces"],
-  ["기타", "/categories/other"],
-];
+import useCategories from "../hooks/useCategories";
+import { categoryPath } from "../data/categories";
 
 const Page = styled.div`
   position: relative;
@@ -148,6 +141,7 @@ const CategoryPanel = styled.nav`
   }
 
   a {
+    flex: 1;
     color: #000;
     font-size: 30px;
     line-height: 1.2;
@@ -167,6 +161,7 @@ const CategoryPanel = styled.nav`
 
 function Home() {
   const navigate = useNavigate();
+  const categories = useCategories();
 
   const handleSearch = (query) => {
     navigate(query ? `/search?query=${encodeURIComponent(query)}` : "/search");
@@ -195,9 +190,9 @@ function Home() {
           </Visual>
         </Hero>
         <CategoryPanel aria-label="제품 카테고리">
-          {categories.map(([label, path]) => (
-            <Link to={path} key={path}>
-              {label}
+          {categories.map((category) => (
+            <Link to={categoryPath(category.code)} key={category.code}>
+              {category.name}
             </Link>
           ))}
         </CategoryPanel>

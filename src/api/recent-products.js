@@ -7,6 +7,18 @@ import {
 
 const recentProductRecordRequests = new Map();
 
+const normalizeProductId = (productId) => {
+  const normalizedProductId = Number(productId);
+
+  if (!Number.isInteger(normalizedProductId) || normalizedProductId <= 0) {
+    const error = new Error("유효한 상품 ID가 필요합니다.");
+    error.status = 400;
+    throw error;
+  }
+
+  return normalizedProductId;
+};
+
 const requireAccessToken = () => {
   if (localStorage.getItem("accessToken")) return;
 
@@ -64,12 +76,13 @@ export async function getRecentProducts({ signal } = {}) {
 
 export function recordRecentProduct(productId) {
   requireAccessToken();
-  const requestKey = String(productId);
+  const normalizedProductId = normalizeProductId(productId);
+  const requestKey = String(normalizedProductId);
   const pendingRequest = recentProductRecordRequests.get(requestKey);
   if (pendingRequest) return pendingRequest;
 
   const request = authenticatedFetch(
-    apiUrl(`users/me/recent-products/${encodeURIComponent(productId)}`),
+    apiUrl(`users/me/recent-products/${normalizedProductId}`),
     { method: "POST" },
   )
     .then(async (response) => {
@@ -95,8 +108,9 @@ export function recordRecentProduct(productId) {
 
 export async function deleteRecentProduct(productId) {
   requireAccessToken();
+  const normalizedProductId = normalizeProductId(productId);
   const response = await authenticatedFetch(
-    apiUrl(`users/me/recent-products/${encodeURIComponent(productId)}`),
+    apiUrl(`users/me/recent-products/${normalizedProductId}`),
     { method: "DELETE" },
   );
   const result = await readJson(response);

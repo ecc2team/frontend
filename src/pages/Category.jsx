@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "@emotion/styled";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import Pagination from "../components/Pagination";
 import ProductSearchCard from "../components/ProductSearchCard";
@@ -9,16 +9,13 @@ import {
   getCategoryBestProducts,
   getCategoryProducts,
 } from "../api/categories";
+import {
+  categoryPath,
+  isSupportedCategoryCode,
+  selectSupportedCategories,
+} from "../data/categories";
 
 const PAGE_SIZE = 20;
-const LEGACY_CATEGORY_CODES = {
-  drinks: "DRINK",
-  "protein-bars": "PROTEIN_BAR",
-  snacks: "SNACK",
-  "frozen-food": "FROZEN_FOOD",
-  sauces: "SAUCE",
-  other: "OTHER",
-};
 
 const Page = styled.div`
   min-height: 100svh;
@@ -40,11 +37,13 @@ const Categories = styled.div`
   background: #fff;
   display: flex;
   align-items: center;
-  gap: clamp(12px, 3.45vw, 50px);
+  justify-content: space-evenly;
+  gap: 24px;
   overflow-x: auto;
 `;
 const Category = styled.button`
-  flex: 0 0 auto;
+  flex: 1 0 auto;
+  max-width: 280px;
   padding: 14px 22px;
   border: 1px solid #df6bff;
   border-radius: 50px;
@@ -91,6 +90,9 @@ const Status = styled.div`
   color: #5c5454;
   font-size: 20px;
 `;
+const SectionStatus = styled(Status)`
+  padding: 38px 20px;
+`;
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -106,20 +108,33 @@ const Grid = styled.div`
   }
 `;
 
+const getRouteCategoryCode = (pathname) => {
+  const segment = pathname.split("/").filter(Boolean).at(-1);
+  if (!segment || segment.toLowerCase() === "categories") return "";
+  return decodeURIComponent(segment).toUpperCase();
+};
+
 export default function CategoryPage() {
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedCode = searchParams.get("category");
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const routeCode = getRouteCategoryCode(location.pathname);
+  const legacyQueryCode = searchParams.get("category")?.toUpperCase() || "";
   const parsedPage = Number(searchParams.get("page") || 0);
   const page = Number.isInteger(parsedPage) && parsedPage >= 0 ? parsedPage : 0;
   const sort = searchParams.get("sort") || "recommended";
   const [categories, setCategories] = useState([]);
   const [selectedCode, setSelectedCode] = useState("");
-  const [state, setState] = useState({
-    status: "loading",
+  const [categoryError, setCategoryError] = useState("");
+  const [productsState, setProductsState] = useState({
+    status: "idle",
     content: [],
-    best: [],
     pageInfo: null,
+    error: "",
+  });
+  const [bestState, setBestState] = useState({
+    status: "idle",
+    content: [],
     error: "",
   });
   const resultsRef = useRef(null);
@@ -128,85 +143,99 @@ export default function CategoryPage() {
     const controller = new AbortController();
     getCategories({ signal: controller.signal })
       .then((items) => {
-        setCategories(items);
-        const legacySlug = location.pathname.split("/").filter(Boolean).at(-1);
-        const legacyCode = LEGACY_CATEGORY_CODES[legacySlug];
-        const initial =
-          items.find(({ code }) => code === requestedCode)?.code ||
-          items.find(({ code }) => code === legacyCode)?.code ||
-          items[0]?.code ||
-          "";
-        setSelectedCode(initial);
+        const supported = selectSupportedCategories(items);
+        setCategories(supported);
+        const requestedCode = isSupportedCategoryCode(routeCode)
+          ? routeCode
+          : isSupportedCategoryCode(legacyQueryCode)
+            ? legacyQueryCode
+            : supported[0]?.code || "";
+        setSelectedCode(requestedCode);
+        setCategoryError("");
+
+        if (requestedCode && routeCode !== requestedCode) {
+          navigate(
+            `${categoryPath(requestedCode)}?page=${page}&sort=${encodeURIComponent(sort)}`,
+            { replace: true },
+          );
+        }
       })
       .catch((error) => {
-        if (error.name !== "AbortError")
-          setState((previous) => ({
-            ...previous,
-            status: "error",
-            error: error.message,
-          }));
+        if (error.name !== "AbortError") setCategoryError(error.message);
       });
+
     return () => controller.abort();
-  }, [location.pathname, requestedCode]);
+  }, [legacyQueryCode, navigate, page, routeCode, sort]);
 
   useEffect(() => {
     if (!selectedCode) return undefined;
     const controller = new AbortController();
     let active = true;
+
     queueMicrotask(() => {
-      if (active)
-        setState((previous) => ({
-          ...previous,
-          status: "loading",
-          error: "",
-        }));
+      if (!active) return;
+      setProductsState((previous) => ({
+        ...previous,
+        status: "loading",
+        error: "",
+      }));
+      setBestState((previous) => ({
+        ...previous,
+        status: "loading",
+        error: "",
+      }));
     });
-    Promise.all([
-      getCategoryProducts(selectedCode, page, PAGE_SIZE, sort, {
-        signal: controller.signal,
-      }),
-      getCategoryBestProducts(selectedCode, 5, { signal: controller.signal }),
-    ])
-      .then(([products, best]) => {
+
+    getCategoryBestProducts(selectedCode, 5, {
+      signal: controller.signal,
+    })
+      .then((products) => {
         if (active)
-          setState({
+          setBestState({ status: "success", content: products, error: "" });
+      })
+      .catch((error) => {
+        if (active && error.name !== "AbortError")
+          setBestState({
+            status: "error",
+            content: [],
+            error: error.message,
+          });
+      });
+
+    getCategoryProducts(selectedCode, page, PAGE_SIZE, sort, {
+      signal: controller.signal,
+    })
+      .then((products) => {
+        if (active)
+          setProductsState({
             status: "success",
             content: products.content,
-            best,
             pageInfo: products.pageInfo,
             error: "",
           });
       })
       .catch((error) => {
         if (active && error.name !== "AbortError")
-          setState({
+          setProductsState({
             status: "error",
             content: [],
-            best: [],
             pageInfo: null,
             error: error.message,
           });
       });
+
     return () => {
       active = false;
       controller.abort();
     };
   }, [selectedCode, page, sort]);
 
-  const selectCategory = (code) => {
-    setSelectedCode(code);
-    setSearchParams({ category: code, page: "0", sort });
+  const navigateToCategory = (code, nextPage = 0, nextSort = sort) => {
+    navigate(
+      `${categoryPath(code)}?page=${nextPage}&sort=${encodeURIComponent(nextSort)}`,
+    );
   };
-  const selectSort = (nextSort) =>
-    setSearchParams({ category: selectedCode, page: "0", sort: nextSort });
-  const changePage = (nextPage) => {
-    setSearchParams({
-      category: selectedCode,
-      page: String(nextPage),
-      sort,
-    });
-    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  const selectedCategory = categories.find(({ code }) => code === selectedCode);
 
   return (
     <Page>
@@ -218,59 +247,85 @@ export default function CategoryPage() {
               key={category.code}
               type="button"
               $active={category.code === selectedCode}
-              onClick={() => selectCategory(category.code)}
+              onClick={() => navigateToCategory(category.code)}
             >
               {category.name}
             </Category>
           ))}
         </Categories>
-        <SortPanel>
-          <SortLabel htmlFor="category-sort">정렬 기준</SortLabel>
-          <SortSelect
-            id="category-sort"
-            value={sort}
-            onChange={(event) => selectSort(event.target.value)}
-          >
-            <option value="recommended">추천순</option>
-            <option value="latest">최신순</option>
-            <option value="name">가나다순</option>
-            <option value="popular">비교함 인기순</option>
-            <option value="views">조회수순</option>
-          </SortSelect>
-        </SortPanel>
-        {state.status === "loading" && (
-          <Status role="status">상품을 불러오고 있어요...</Status>
-        )}
-        {state.status === "error" && <Status role="alert">{state.error}</Status>}
-        {state.status === "success" && (
+
+        {categoryError ? (
+          <Status role="alert">{categoryError}</Status>
+        ) : (
           <>
-            <SectionTitle>베스트 상품</SectionTitle>
-            {state.best.length > 0 ? (
-              <Grid>
-                {state.best.map((product) => (
-                  <ProductSearchCard key={product.productId} product={product} />
-                ))}
-              </Grid>
-            ) : (
-              <Status>베스트 상품이 없습니다.</Status>
+            <SortPanel>
+              <SortLabel htmlFor="category-sort">정렬 기준</SortLabel>
+              <SortSelect
+                id="category-sort"
+                value={sort}
+                onChange={(event) =>
+                  navigateToCategory(selectedCode, 0, event.target.value)
+                }
+              >
+                <option value="recommended">추천순</option>
+                <option value="latest">최신순</option>
+                <option value="name">가나다순</option>
+                <option value="views">조회수순</option>
+              </SortSelect>
+            </SortPanel>
+
+            <SectionTitle>{selectedCategory?.name || "카테고리"} BEST 5</SectionTitle>
+            {bestState.status === "loading" && (
+              <SectionStatus role="status">베스트 상품을 불러오고 있습니다...</SectionStatus>
             )}
-            <SectionTitle ref={resultsRef}>상품 목록</SectionTitle>
-            {state.content.length > 0 ? (
-              <>
+            {bestState.status === "error" && (
+              <SectionStatus role="alert">
+                베스트 상품을 불러오지 못했습니다.
+              </SectionStatus>
+            )}
+            {bestState.status === "success" &&
+              (bestState.content.length > 0 ? (
                 <Grid>
-                  {state.content.map((product) => (
+                  {bestState.content.map((product) => (
                     <ProductSearchCard key={product.productId} product={product} />
                   ))}
                 </Grid>
-                <Pagination
-                  totalPages={state.pageInfo.totalPages}
-                  currentPage={state.pageInfo.pageNumber}
-                  onChange={changePage}
-                />
-              </>
-            ) : (
-              <Status>해당 카테고리의 상품이 없습니다.</Status>
+              ) : (
+                <SectionStatus>베스트 상품이 없습니다.</SectionStatus>
+              ))}
+
+            <SectionTitle ref={resultsRef}>전체 상품</SectionTitle>
+            {productsState.status === "loading" && (
+              <Status role="status">상품을 불러오고 있습니다...</Status>
             )}
+            {productsState.status === "error" && (
+              <Status role="alert">{productsState.error}</Status>
+            )}
+            {productsState.status === "success" &&
+              (productsState.content.length > 0 ? (
+                <>
+                  <Grid>
+                    {productsState.content.map((product) => (
+                      <ProductSearchCard key={product.productId} product={product} />
+                    ))}
+                  </Grid>
+                  {productsState.pageInfo && (
+                    <Pagination
+                      totalPages={productsState.pageInfo.totalPages}
+                      currentPage={productsState.pageInfo.pageNumber}
+                      onChange={(nextPage) => {
+                        navigateToCategory(selectedCode, nextPage);
+                        resultsRef.current?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }}
+                    />
+                  )}
+                </>
+              ) : (
+                <Status>해당 카테고리에 상품이 없습니다.</Status>
+              ))}
           </>
         )}
       </Main>
