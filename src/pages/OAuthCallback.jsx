@@ -45,7 +45,7 @@ export default function OAuthCallback({ provider }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [error, setError] = useState("");
-  const authCode = searchParams.get("code");
+  const authCode = searchParams.get("code")?.trim() || "";
   const displayedError =
     error || (!authCode ? "로그인 인증 코드가 없습니다. 다시 로그인해주세요." : "");
 
@@ -74,15 +74,7 @@ export default function OAuthCallback({ provider }) {
         }
 
         if (data.isNewUser) {
-          navigate("/signup", {
-            replace: true,
-            state: {
-              socialOnboarding: {
-                email: data.email ?? "",
-                nickname: data.nickname ?? "",
-              },
-            },
-          });
+          navigate("/onboarding", { replace: true });
           return;
         }
 

@@ -64,11 +64,9 @@ export function submitSocialOnboarding(onboarding) {
     method: "POST",
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
-      onboarding: {
-        preferredCategories: onboarding.preferredCategories ?? [],
-        dislikedIngredients: onboarding.dislikedIngredients ?? [],
-        allergyFlags: onboarding.allergyFlags ?? [],
-      },
+      preferredCategories: onboarding.preferredCategories ?? [],
+      dislikedIngredients: onboarding.dislikedIngredients ?? [],
+      allergyFlags: onboarding.allergyFlags ?? [],
     }),
   });
 }

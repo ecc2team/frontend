@@ -385,8 +385,12 @@ export const handlers = [
   http.post(apiUrl("auth/google"), socialCallback),
 
   http.post(apiUrl("auth/onboarding"), async ({ request }) => {
-    const { onboarding } = await request.json();
-    if (!onboarding) {
+    const onboarding = await request.json();
+    if (
+      !Array.isArray(onboarding.preferredCategories) ||
+      !Array.isArray(onboarding.dislikedIngredients) ||
+      !Array.isArray(onboarding.allergyFlags)
+    ) {
       return HttpResponse.json(
         { status: 400, message: "온보딩 정보가 없습니다.", data: null },
         { status: 400 },
