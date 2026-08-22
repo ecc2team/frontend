@@ -15,6 +15,8 @@ import Records from "./pages/Records";
 import OAuthCallback from "./pages/OAuthCallback";
 import RecentProducts from "./pages/RecentProducts";
 import CategoryPage from "./pages/Category";
+import FindAccount from "./pages/FindAccount";
+import ResetPassword from "./pages/ResetPassword";
 
 const routes = [
   ["/recommendations", "추천"],
@@ -29,6 +31,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/find-account" element={<FindAccount />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route

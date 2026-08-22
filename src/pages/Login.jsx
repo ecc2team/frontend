@@ -77,6 +77,15 @@ const Error = styled.p`
   color: #c62828;
   text-align: center;
 `;
+const RecoveryLinks = styled.div`
+  margin: 4px 0 24px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  color: #8f8686;
+  a { color: #5c5454; text-decoration: none; }
+  a:hover { color: #a032be; text-decoration: underline; }
+`;
 const Divider = styled.div`
   width: 78%;
   height: 1px;
@@ -137,6 +146,11 @@ export default function Login() {
           <Button disabled={loading}>
             {loading ? "로그인 중..." : "로그인"}
           </Button>
+          <RecoveryLinks>
+            <Link to="/find-account">계정 찾기</Link>
+            <span aria-hidden="true">|</span>
+            <Link to="/reset-password">비밀번호 재설정</Link>
+          </RecoveryLinks>
           <Signup to="/signup">회원가입</Signup>
           {error && <Error role="alert">{error}</Error>}
           <Divider />

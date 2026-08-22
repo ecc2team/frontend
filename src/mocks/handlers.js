@@ -324,6 +324,36 @@ export const handlers = [
     );
   }),
 
+  http.post(apiUrl("users/find-account"), async ({ request }) => {
+    const { email } = await request.json();
+    if (!email) {
+      return HttpResponse.json(
+        { status: 400, message: "이메일을 입력해주세요.", data: null },
+        { status: 400 },
+      );
+    }
+    return HttpResponse.json({
+      status: 200,
+      message: "가입된 계정을 찾았습니다.",
+      data: { userId: mockUser.userId, email, provider: "LOCAL" },
+    });
+  }),
+
+  http.post(apiUrl("users/reset-pw"), async ({ request }) => {
+    const { email, newPassword } = await request.json();
+    if (!email || !newPassword) {
+      return HttpResponse.json(
+        { status: 400, message: "이메일과 새 비밀번호를 입력해주세요.", data: null },
+        { status: 400 },
+      );
+    }
+    return HttpResponse.json({
+      status: 200,
+      message: "비밀번호가 변경되었습니다. 새 비밀번호로 로그인해주세요.",
+      data: null,
+    });
+  }),
+
   // 회원가입 Mock
   http.get(apiUrl("ingredients"), () => {
     return HttpResponse.json({
