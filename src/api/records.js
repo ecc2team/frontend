@@ -1,7 +1,6 @@
 import { formatKstTime, getKstDateKey } from "../utils/dateTime";
-import { deduplicatedGet } from "./client";
+import { apiUrl, deduplicatedGet } from "./client";
 
-const DAILY_RECORDS_API_URL = import.meta.env.VITE_DAILY_RECORDS_API_URL;
 const LOCAL_RECORDS_KEY = "zeropick:consumption-records";
 
 const EMPTY_NUTRIENTS = [
@@ -118,7 +117,7 @@ export function deleteConsumptionRecord(recordId) {
 }
 
 export async function getDailyRecords(date, { signal } = {}) {
-  if (!DAILY_RECORDS_API_URL) {
+  if (date !== getKstDateKey()) {
     const records = getLocalRecordsByDate(date);
     return {
       totalCalories: records.reduce(
@@ -131,12 +130,7 @@ export async function getDailyRecords(date, { signal } = {}) {
     };
   }
 
-  const url = new URL(DAILY_RECORDS_API_URL, window.location.origin);
-  url.searchParams.set("date", date);
-  const userId = localStorage.getItem("userId");
-  if (userId) url.searchParams.set("userId", userId);
-
-  const response = await deduplicatedGet(url.toString(), {
+  const response = await deduplicatedGet(apiUrl("intake/today"), {
     signal,
     authenticated: true,
   });

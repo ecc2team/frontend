@@ -23,7 +23,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
-      VITE_DAILY_RECORDS_API_URL: ${{ vars.VITE_DAILY_RECORDS_API_URL }}
       VITE_ENABLE_MSW: "false"
       VITE_KAKAO_REDIRECT_URI: ${{ vars.VITE_KAKAO_REDIRECT_URI }}
       VITE_GOOGLE_REDIRECT_URI: ${{ vars.VITE_GOOGLE_REDIRECT_URI }}
@@ -44,6 +43,18 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate production environment
+        shell: bash
+        run: |
+          if [[ -z "$VITE_API_BASE_URL" ]]; then
+            echo "VITE_API_BASE_URL Repository Variable is required."
+            exit 1
+          fi
+          if [[ "$VITE_API_BASE_URL" != https://* || "$VITE_API_BASE_URL" == *"VITE_"* ]]; then
+            echo "VITE_API_BASE_URL must contain only the HTTPS backend origin."
+            exit 1
+          fi
 
       - name: Build
         run: npm run build
