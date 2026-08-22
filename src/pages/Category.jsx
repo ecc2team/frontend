@@ -16,6 +16,13 @@ import {
 } from "../data/categories";
 
 const PAGE_SIZE = 20;
+const SORT_OPTIONS = [
+  ["recommended", "추천순"],
+  ["latest", "최신순"],
+  ["name", "가나다순"],
+  ["popular", "인기순"],
+  ["views", "조회순"],
+];
 
 const Page = styled.div`
   min-height: 100svh;
@@ -66,19 +73,62 @@ const SortPanel = styled.div`
   align-items: center;
   gap: 35px;
 `;
-const SortLabel = styled.label`
+const SortLabel = styled.span`
+  flex: 0 0 auto;
   font-size: 18px;
   font-weight: 700;
 `;
-const SortSelect = styled.select`
-  width: min(309px, 100%);
-  height: 40px;
-  padding: 0 18px;
-  border: 1px solid #df6bff;
-  border-radius: 10px;
-  background: #fff;
-  color: #332d33;
-  font-size: 17px;
+const SortOptions = styled.div`
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.4vw, 32px);
+  overflow-x: auto;
+`;
+const SortOption = styled.label`
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #000;
+  font-size: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+
+  input {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    border: 1px solid #cfc9d2;
+    border-radius: 50%;
+    background: #fff;
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+  }
+
+  input::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #a032be;
+    transform: scale(0);
+  }
+
+  input:checked {
+    border-color: #a032be;
+  }
+
+  input:checked::before {
+    transform: scale(1);
+  }
+
+  input:focus-visible {
+    outline: 3px solid #df6bff;
+    outline-offset: 2px;
+  }
 `;
 const SectionTitle = styled.h1`
   margin: 24px 0 0;
@@ -117,7 +167,7 @@ const getRouteCategoryCode = (pathname) => {
 export default function CategoryPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const routeCode = getRouteCategoryCode(location.pathname);
   const legacyQueryCode = searchParams.get("category")?.toUpperCase() || "";
   const parsedPage = Number(searchParams.get("page") || 0);
@@ -262,6 +312,14 @@ export default function CategoryPage() {
       `${categoryPath(code)}?page=${nextPage}&sort=${encodeURIComponent(nextSort)}`,
     );
   };
+  const changeSort = (nextSort) => {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+      nextParams.set("page", "0");
+      nextParams.set("sort", nextSort);
+      return nextParams;
+    });
+  };
   const selectedCategory = categories.find(({ code }) => code === selectedCode);
 
   return (
@@ -306,19 +364,24 @@ export default function CategoryPage() {
               ))}
 
             <SortPanel>
-              <SortLabel htmlFor="category-sort">정렬 기준</SortLabel>
-              <SortSelect
-                id="category-sort"
-                value={sort}
-                onChange={(event) =>
-                  navigateToCategory(selectedCode, 0, event.target.value)
-                }
+              <SortLabel id="category-sort-label">정렬 기준</SortLabel>
+              <SortOptions
+                role="radiogroup"
+                aria-labelledby="category-sort-label"
               >
-                <option value="recommended">추천순</option>
-                <option value="latest">최신순</option>
-                <option value="name">가나다순</option>
-                <option value="views">조회수순</option>
-              </SortSelect>
+                {SORT_OPTIONS.map(([value, label]) => (
+                  <SortOption key={value}>
+                    <input
+                      type="radio"
+                      name="category-sort"
+                      value={value}
+                      checked={sort === value}
+                      onChange={() => changeSort(value)}
+                    />
+                    <span>{label}</span>
+                  </SortOption>
+                ))}
+              </SortOptions>
             </SortPanel>
 
             <SectionTitle ref={resultsRef}>전체 상품</SectionTitle>

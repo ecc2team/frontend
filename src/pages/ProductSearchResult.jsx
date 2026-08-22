@@ -68,24 +68,59 @@ const SortPanel = styled.div`
     gap: 18px;
   }
 `;
-const SortLabel = styled.label`
+const SortLabel = styled.span`
   flex: 0 0 auto;
   font-size: 18px;
   font-weight: 700;
 `;
-const SortSelect = styled.select`
-  width: min(309px, 100%);
-  height: 40px;
-  padding: 0 18px;
-  border: 1px solid #df6bff;
-  border-radius: 10px;
-  background: #fff;
-  color: #332d33;
-  font-size: 17px;
+const SortOptions = styled.div`
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.4vw, 32px);
+  overflow-x: auto;
+`;
+const SortOption = styled.label`
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #000;
+  font-size: 16px;
+  white-space: nowrap;
   cursor: pointer;
-  outline: none;
 
-  &:focus-visible {
+  input {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    border: 1px solid #cfc9d2;
+    border-radius: 50%;
+    background: #fff;
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+  }
+
+  input::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #a032be;
+    transform: scale(0);
+  }
+
+  input:checked {
+    border-color: #a032be;
+  }
+
+  input:checked::before {
+    transform: scale(1);
+  }
+
+  input:focus-visible {
     outline: 3px solid #df6bff;
     outline-offset: 2px;
   }
@@ -221,6 +256,13 @@ export default function ProductSearchResult() {
       sort,
       page: "0",
     });
+  const changeSort = (nextSort) =>
+    setSearchParams({
+      query,
+      ...(category ? { category } : {}),
+      sort: nextSort,
+      page: "0",
+    });
   const changePage = (nextPage) => {
     setSearchParams({
       query,
@@ -261,25 +303,25 @@ export default function ProductSearchResult() {
             </Category>
           ))}
         </Categories>
-        <SortPanel>
-          <SortLabel htmlFor="product-sort">정렬 기준</SortLabel>
-          <SortSelect
-            id="product-sort"
-            value={sort}
-            onChange={(event) =>
-              setSearchParams({
-                query,
-                ...(category ? { category } : {}),
-                sort: event.target.value,
-                page: "0",
-              })
-            }
-          >
-            {SORT_OPTIONS.map(([code, label]) => (
-              <option key={code} value={code}>{label}</option>
-            ))}
-          </SortSelect>
-        </SortPanel>
+        {category && (
+          <SortPanel>
+            <SortLabel id="product-sort-label">정렬 기준</SortLabel>
+            <SortOptions role="radiogroup" aria-labelledby="product-sort-label">
+              {SORT_OPTIONS.map(([code, label]) => (
+                <SortOption key={code}>
+                  <input
+                    type="radio"
+                    name="product-sort"
+                    value={code}
+                    checked={sort === code}
+                    onChange={() => changeSort(code)}
+                  />
+                  <span>{label}</span>
+                </SortOption>
+              ))}
+            </SortOptions>
+          </SortPanel>
+        )}
         <ResultPanel ref={resultsRef}>
           <Count>
             {query
