@@ -47,12 +47,20 @@ jobs:
       - name: Validate production environment
         shell: bash
         run: |
-          if [[ -z "$VITE_API_BASE_URL" ]]; then
-            echo "VITE_API_BASE_URL Repository Variable is required."
+          if [[ "$VITE_API_BASE_URL" != "https://backend-jdau.onrender.com" ]]; then
+            echo "VITE_API_BASE_URL must be https://backend-jdau.onrender.com."
             exit 1
           fi
-          if [[ "$VITE_API_BASE_URL" != https://* || "$VITE_API_BASE_URL" == *"VITE_"* ]]; then
-            echo "VITE_API_BASE_URL must contain only the HTTPS backend origin."
+          if [[ "$VITE_ENABLE_MSW" != "false" ]]; then
+            echo "VITE_ENABLE_MSW must be false."
+            exit 1
+          fi
+          if [[ "$VITE_KAKAO_REDIRECT_URI" != "https://ecc2team.github.io/frontend/oauth/kakao/callback" ]]; then
+            echo "VITE_KAKAO_REDIRECT_URI is not the production callback URL."
+            exit 1
+          fi
+          if [[ "$VITE_GOOGLE_REDIRECT_URI" != "https://ecc2team.github.io/frontend/oauth/google/callback" ]]; then
+            echo "VITE_GOOGLE_REDIRECT_URI is not the production callback URL."
             exit 1
           fi
 

@@ -18,16 +18,17 @@ export const OAUTH_CONFIG = {
     redirectUri: KAKAO_REDIRECT_URI,
     authorizeUrl:
       "https://kauth.kakao.com/oauth/authorize" +
-      `?client_id=${KAKAO_CLIENT_ID}` +
-      `&redirect_uri=${KAKAO_REDIRECT_URI}` +
+      `?client_id=${encodeURIComponent(KAKAO_CLIENT_ID)}` +
+      `&redirect_uri=${encodeURIComponent(KAKAO_REDIRECT_URI)}` +
       "&response_type=code",
   },
+
   google: {
     redirectUri: GOOGLE_REDIRECT_URI,
     authorizeUrl:
       "https://accounts.google.com/o/oauth2/v2/auth" +
-      `?client_id=${GOOGLE_CLIENT_ID}` +
-      `&redirect_uri=${GOOGLE_REDIRECT_URI}` +
+      `?client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
+      `&redirect_uri=${encodeURIComponent(GOOGLE_REDIRECT_URI)}` +
       "&response_type=code&scope=email%20profile",
   },
 };

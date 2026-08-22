@@ -8,6 +8,28 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (() => {
+        const redirectKey = "zeropick:spa-redirect";
+        const redirectUrl = sessionStorage.getItem(redirectKey);
+        sessionStorage.removeItem(redirectKey);
+
+        if (!redirectUrl) return;
+
+        const target = new URL(redirectUrl);
+        const basePath = "%BASE_URL%";
+        if (
+          target.origin === window.location.origin &&
+          target.pathname.startsWith(basePath)
+        ) {
+          window.history.replaceState(
+            null,
+            "",
+            `${target.pathname}${target.search}${target.hash}`,
+          );
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

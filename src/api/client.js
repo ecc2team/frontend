@@ -91,8 +91,9 @@ export async function reissueAccessToken() {
 
 export async function authenticatedFetch(url, options = {}) {
   const redirectToLogin = () => {
-    if (window.location.hash !== "#/login") {
-      window.location.assign(`${import.meta.env.BASE_URL}#/login`);
+    const loginPath = `${import.meta.env.BASE_URL}login`;
+    if (window.location.pathname !== loginPath) {
+      window.location.assign(loginPath);
     }
   };
   const request = (headers) =>
