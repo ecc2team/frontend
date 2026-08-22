@@ -17,10 +17,10 @@ import RecentProducts from "./pages/RecentProducts";
 import CategoryPage from "./pages/Category";
 import FindAccount from "./pages/FindAccount";
 import ResetPassword from "./pages/ResetPassword";
+import Ranking from "./pages/Ranking";
 
 const routes = [
   ["/recommendations", "추천"],
-  ["/ranking", "랭킹"],
   ["/compare", "비교함"],
   ["/records", "기록"],
 ];
@@ -46,6 +46,7 @@ function App() {
         <Route path="/search" element={<ProductSearchResult />} />
         <Route path="/products/:productId" element={<ProductDetail />} />
         <Route path="/categories/*" element={<CategoryPage />} />
+        <Route path="/ranking" element={<Ranking />} />
         <Route
           path="/recent-products"
           element={
