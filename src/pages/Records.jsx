@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "@emotion/styled";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
-import { deleteConsumptionRecord, getDailyRecords } from "../api/records";
+import { deleteIntakeRecord, getDailyRecords } from "../api/records";
 import { getKstDateKey, moveDate } from "../utils/dateTime";
 import sugarIcon from "../assets/nutrition-sugar.svg";
 import sodiumIcon from "../assets/nutrition-sodium.svg";
@@ -338,8 +338,9 @@ const Status = styled.p`
 
 export default function Records() {
   const [date, setDate] = useState(() => getKstDateKey());
-  const [revision, setRevision] = useState(0);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [deletingRecordId, setDeletingRecordId] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
   const [state, setState] = useState({
     status: "loading",
     data: null,
@@ -362,12 +363,24 @@ export default function Records() {
       active = false;
       controller.abort();
     };
-  }, [date, revision]);
+  }, [date]);
 
-  const handleDelete = (recordId) => {
-    if (!deleteConsumptionRecord(recordId)) return;
-    setOpenMenuId(null);
-    setRevision((value) => value + 1);
+  const handleDelete = async (intakeRecordId) => {
+    if (deletingRecordId === intakeRecordId) return;
+
+    setDeletingRecordId(intakeRecordId);
+    setDeleteError("");
+
+    try {
+      await deleteIntakeRecord(intakeRecordId);
+      const data = await getDailyRecords(date);
+      setState({ status: "success", data, error: "" });
+      setOpenMenuId(null);
+    } catch (error) {
+      setDeleteError(error.message || "섭취 기록 삭제에 실패했습니다.");
+    } finally {
+      setDeletingRecordId(null);
+    }
   };
 
   const data = state.data;
@@ -413,6 +426,7 @@ export default function Records() {
         {state.status === "loading" && (
           <Status role="status">기록을 불러오고 있어요...</Status>
         )}
+        {deleteError && <Status role="alert">{deleteError}</Status>}
         {data && (
           <>
             <Summary>
@@ -465,7 +479,7 @@ export default function Records() {
                       <p>{record.amount}</p>
                     </div>
                     <strong>{record.calories} kcal</strong>
-                    {record.isLocal ? (
+                    {record.id != null ? (
                       <RecordMenu>
                         <MenuButton
                           type="button"
@@ -482,6 +496,7 @@ export default function Records() {
                         {openMenuId === record.id && (
                           <DeleteButton
                             type="button"
+                            disabled={deletingRecordId === record.id}
                             onClick={() => handleDelete(record.id)}
                           >
                             삭제하기
