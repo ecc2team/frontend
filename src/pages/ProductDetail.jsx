@@ -228,10 +228,10 @@ const Analysis = styled(Panel)`
 `;
 const Footer = styled(Panel)`
   min-height: 117px;
-  padding: 14px 48px;
+  padding: 14px 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 24px;
   h2 {
     margin: 0;
@@ -243,40 +243,90 @@ const Footer = styled(Panel)`
     display: flex;
     gap: 36px;
     align-items: center;
-  }
-  @media (max-width: 650px) {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .actions {
-    width: auto;
+    flex: 0 0 auto;
     margin-left: auto;
     justify-content: flex-end;
+    white-space: nowrap;
+  }
+  .actions > button {
+    width: 146px;
+    min-width: 146px;
+    padding: 0 16px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .actions > a {
+    width: 215px;
+    min-width: 215px;
+    padding: 0 20px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 1100px) {
     flex-wrap: wrap;
+    align-items: flex-start;
+    h2 {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 650px) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    .actions {
+      width: 100%;
+      gap: 16px;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .actions {
+      gap: 12px;
+    }
+    .actions > button {
+      width: 140px;
+      min-width: 140px;
+    }
+    .actions > a {
+      width: 180px;
+      min-width: 180px;
+    }
   }
 `;
 const RecommendationList = styled.div`
   min-width: 0;
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: repeat(5, minmax(72px, 1fr));
+  grid-template-columns: repeat(5, minmax(92px, 120px));
   align-items: start;
-  gap: 18px;
+  justify-content: space-between;
+  gap: clamp(12px, 1.4vw, 24px);
 
-  @media (max-width: 980px) {
-    grid-template-columns: repeat(3, minmax(72px, 1fr));
+  @media (max-width: 1100px) {
+    width: min(680px, 100%);
+    flex: 1 1 600px;
   }
 
   @media (max-width: 650px) {
     width: 100%;
-    grid-template-columns: repeat(2, minmax(72px, 1fr));
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+    padding: 3px;
   }
 `;
 const RecommendationItem = styled(Link)`
+  width: 100%;
   min-width: 0;
   color: #332d33;
   text-decoration: none;
   text-align: center;
+
+  @media (max-width: 650px) {
+    flex: 0 0 120px;
+  }
 
   &:focus-visible {
     border-radius: 6px;
