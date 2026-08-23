@@ -239,30 +239,6 @@ const Footer = styled(Panel)`
     white-space: nowrap;
     flex: 0 0 auto;
   }
-  .actions {
-    display: flex;
-    gap: 36px;
-    align-items: center;
-    flex: 0 0 auto;
-    margin-left: auto;
-    justify-content: flex-end;
-    white-space: nowrap;
-  }
-  .actions > button {
-    width: 146px;
-    min-width: 146px;
-    padding: 0 16px;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-  .actions > a {
-    width: 215px;
-    min-width: 215px;
-    padding: 0 20px;
-    flex-shrink: 0;
-    white-space: nowrap;
-    box-sizing: border-box;
-  }
 
   @media (max-width: 1100px) {
     flex-wrap: wrap;
@@ -275,38 +251,19 @@ const Footer = styled(Panel)`
   @media (max-width: 650px) {
     flex-direction: column;
     flex-wrap: nowrap;
-    .actions {
-      width: 100%;
-      gap: 16px;
-    }
-  }
-
-  @media (max-width: 420px) {
-    .actions {
-      gap: 12px;
-    }
-    .actions > button {
-      width: 140px;
-      min-width: 140px;
-    }
-    .actions > a {
-      width: 180px;
-      min-width: 180px;
-    }
   }
 `;
 const RecommendationList = styled.div`
   min-width: 0;
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: repeat(5, minmax(92px, 120px));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: start;
-  justify-content: space-between;
-  gap: clamp(12px, 1.4vw, 24px);
+  gap: clamp(20px, 4vw, 56px);
 
   @media (max-width: 1100px) {
-    width: min(680px, 100%);
-    flex: 1 1 600px;
+    width: 100%;
+    flex-basis: 100%;
   }
 
   @media (max-width: 650px) {
@@ -586,12 +543,6 @@ export default function ProductDetail() {
               ))}
             </RecommendationList>
           )}
-          <div className="actions">
-            <OutlineButton type="button" onClick={handleAddToComparison}>
-              비교함 담기
-            </OutlineButton>
-            <SearchAgain to="/search">다시 검색하기</SearchAgain>
-          </div>
         </Footer>
       </Main>
     </Page>
