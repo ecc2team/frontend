@@ -3,7 +3,6 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Onboarding from "./pages/Onboarding";
-import SectionPage from "./pages/SectionPage";
 import ProductSearchResult from "./pages/ProductSearchResult";
 import ProductDetail from "./pages/ProductDetail";
 import ComparisonList from "./pages/ComparisonList";
@@ -18,12 +17,7 @@ import CategoryPage from "./pages/Category";
 import FindAccount from "./pages/FindAccount";
 import ResetPassword from "./pages/ResetPassword";
 import Ranking from "./pages/Ranking";
-
-const routes = [
-  ["/recommendations", "추천"],
-  ["/compare", "비교함"],
-  ["/records", "기록"],
-];
+import Recommendations from "./pages/Recommendations";
 
 function App() {
   return (
@@ -54,6 +48,14 @@ function App() {
         <Route path="/products/:productId" element={<ProductDetail />} />
         <Route path="/categories/*" element={<CategoryPage />} />
         <Route path="/ranking" element={<Ranking />} />
+        <Route
+          path="/recommendations"
+          element={
+            <ProtectedRoute>
+              <Recommendations />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/recent-products"
           element={
@@ -94,20 +96,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {routes
-          .filter(
-            ([path]) =>
-              path !== "/compare" &&
-              path !== "/records" &&
-              !path.startsWith("/categories"),
-          )
-          .map(([path, title]) => (
-            <Route
-              key={path}
-              path={path}
-              element={<SectionPage title={title} />}
-            />
-          ))}
         <Route
           path="/records"
           element={

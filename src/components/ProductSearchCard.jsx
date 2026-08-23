@@ -62,6 +62,16 @@ const Grade = styled.strong`
   color: #a032be;
   font-size: 16px;
 `;
+const PreferenceBadge = styled.span`
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: #f3deff;
+  color: #6d2281;
+  font-size: 11px;
+  font-weight: 700;
+`;
 const Ingredients = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -97,7 +107,7 @@ const Allergy = styled.p`
   overflow-wrap: anywhere;
 `;
 
-export default function ProductSearchCard({ product }) {
+export default function ProductSearchCard({ product, recommendation = false }) {
   const [imageFailed, setImageFailed] = useState(false);
   const meta =
     product.score != null
@@ -129,10 +139,13 @@ export default function ProductSearchCard({ product }) {
         )}
       </ImageBox>
       <Name>{product.productName}</Name>
+      {recommendation && product.matchedPreference && (
+        <PreferenceBadge>취향 맞춤</PreferenceBadge>
+      )}
       {meta.length > 0 && <Meta>{meta.join(" · ")}</Meta>}
       <Grade>
         {product.rank != null && `${product.rank}위 · `}
-        {product.score}점
+        {recommendation ? `ZeroPick ${product.score}점` : `${product.score}점`}
       </Grade>
       <Ingredients>
         {Array.isArray(product.keyIngredients) &&
@@ -143,11 +156,13 @@ export default function ProductSearchCard({ product }) {
       <Warning $warning={product.warningAdditive}>
         {product.warningAdditive ? "주의 첨가물이 있어요" : "주의 첨가물 없음"}
       </Warning>
-      <Allergy $hasAllergy={product.allergicIngredients?.length > 0}>
-        {product.allergicIngredients?.length > 0
-          ? `알레르기 유발 성분: ${product.allergicIngredients.join(", ")}`
-          : "알레르기 유발 성분 없음"}
-      </Allergy>
+      {!recommendation && (
+        <Allergy $hasAllergy={product.allergicIngredients?.length > 0}>
+          {product.allergicIngredients?.length > 0
+            ? `알레르기 유발 성분: ${product.allergicIngredients.join(", ")}`
+            : "알레르기 유발 성분 없음"}
+        </Allergy>
+      )}
     </Card>
   );
 }
