@@ -8,6 +8,23 @@ import { getProductDetail } from "../api/products";
 import { addConsumptionRecord } from "../api/records";
 import { addToComparisonList } from "../api/comparison-list";
 import { recordRecentProduct } from "../api/recent-products";
+import { getRecommendations } from "../api/recommendations";
+
+const selectRandomRecommendations = (products, currentProductId, limit = 5) => {
+  const candidates = products.filter(
+    (product) => String(product.productId) !== String(currentProductId),
+  );
+
+  for (let index = candidates.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [candidates[index], candidates[randomIndex]] = [
+      candidates[randomIndex],
+      candidates[index],
+    ];
+  }
+
+  return candidates.slice(0, limit);
+};
 
 const Page = styled.div`
   min-height: 100svh;
@@ -211,10 +228,10 @@ const Analysis = styled(Panel)`
 `;
 const Footer = styled(Panel)`
   min-height: 117px;
-  padding: 14px 48px;
+  padding: 14px 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 24px;
   h2 {
     margin: 0;
@@ -222,20 +239,87 @@ const Footer = styled(Panel)`
     white-space: nowrap;
     flex: 0 0 auto;
   }
-  .actions {
-    display: flex;
-    gap: 36px;
-    align-items: center;
-  }
-  @media (max-width: 650px) {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .actions {
-    width: auto;
-    margin-left: auto;
-    justify-content: flex-end;
+
+  @media (max-width: 1100px) {
     flex-wrap: wrap;
+    align-items: flex-start;
+    h2 {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 650px) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+`;
+const RecommendationList = styled.div`
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(20px, 4vw, 56px);
+
+  @media (max-width: 1100px) {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  @media (max-width: 650px) {
+    width: 100%;
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+    padding: 3px;
+  }
+`;
+const RecommendationItem = styled(Link)`
+  width: 100%;
+  min-width: 0;
+  color: #332d33;
+  text-decoration: none;
+  text-align: center;
+
+  @media (max-width: 650px) {
+    flex: 0 0 120px;
+  }
+
+  &:focus-visible {
+    border-radius: 6px;
+    outline: 3px solid #df6bff;
+    outline-offset: 3px;
+  }
+
+  .visual {
+    width: 100%;
+    height: 54px;
+    border-radius: 6px;
+    background: #f5eff7;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .fallback {
+    color: #8f8686;
+    font-size: 11px;
+  }
+
+  strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `;
 const SearchAgain = styled(Link)`
@@ -269,6 +353,10 @@ export default function ProductDetail() {
   const [expanded, setExpanded] = useState(false);
   const [failedImageUrl, setFailedImageUrl] = useState(null);
   const [actionError, setActionError] = useState("");
+  const [recommendations, setRecommendations] = useState({
+    productId: null,
+    items: [],
+  });
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
@@ -288,6 +376,31 @@ export default function ProductDetail() {
         if (active && error.name !== "AbortError")
           setState({ status: "error", product: null, error: error.message });
       });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [productId]);
+  useEffect(() => {
+    if (!localStorage.getItem("accessToken")) return undefined;
+
+    const controller = new AbortController();
+    let active = true;
+
+    getRecommendations({ size: 20, signal: controller.signal })
+      .then((products) => {
+        if (!active) return;
+        setRecommendations({
+          productId: String(productId),
+          items: selectRandomRecommendations(products, productId),
+        });
+      })
+      .catch((error) => {
+        if (active && error.name !== "AbortError") {
+          setRecommendations({ productId: String(productId), items: [] });
+        }
+      });
+
     return () => {
       active = false;
       controller.abort();
@@ -336,6 +449,10 @@ export default function ProductDetail() {
     }
   };
   const productSummary = product.summary || "주요 성분 정보 없음";
+  const recommendedProducts =
+    recommendations.productId === String(productId)
+      ? recommendations.items
+      : [];
   return (
     <Page>
       <Header />
@@ -403,12 +520,29 @@ export default function ProductDetail() {
         </Analysis>
         <Footer>
           <h2>이런 제품은 어때요?</h2>
-          <div className="actions">
-            <OutlineButton type="button" onClick={handleAddToComparison}>
-              비교함 담기
-            </OutlineButton>
-            <SearchAgain to="/search">다시 검색하기</SearchAgain>
-          </div>
+          {recommendedProducts.length > 0 && (
+            <RecommendationList aria-label="추천 상품">
+              {recommendedProducts.map((recommendedProduct) => (
+                <RecommendationItem
+                  key={recommendedProduct.productId}
+                  to={`/products/${encodeURIComponent(recommendedProduct.productId)}`}
+                  aria-label={`${recommendedProduct.productName} 상세 보기`}
+                >
+                  <div className="visual">
+                    {recommendedProduct.imageUrl ? (
+                      <img
+                        src={recommendedProduct.imageUrl}
+                        alt={recommendedProduct.productName}
+                      />
+                    ) : (
+                      <span className="fallback">제품 이미지 없음</span>
+                    )}
+                  </div>
+                  <strong>{recommendedProduct.productName}</strong>
+                </RecommendationItem>
+              ))}
+            </RecommendationList>
+          )}
         </Footer>
       </Main>
     </Page>

@@ -3,6 +3,7 @@ import { apiUrl, deduplicatedGet, readJson } from "./client";
 const normalizeRecommendation = (product) => ({
   productId: product.productId,
   productName: product.name,
+  imageUrl: product.imageUrl ?? product.image ?? null,
   score: product.score,
   calories: product.calories,
   sugar: product.sugar,

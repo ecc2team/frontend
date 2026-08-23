@@ -1,5 +1,10 @@
 import { formatKstTime, getKstDateKey } from "../utils/dateTime";
-import { apiUrl, deduplicatedGet } from "./client";
+import {
+  apiUrl,
+  authenticatedFetch,
+  deduplicatedGet,
+  readJson,
+} from "./client";
 
 const LOCAL_RECORDS_KEY = "zeropick:consumption-records";
 
@@ -20,7 +25,7 @@ const normalizePercentage = (value) =>
   Math.min(100, Math.max(0, Number(value) || 0));
 
 const normalizeRecord = (record) => ({
-  id: record.recordId ?? record.id,
+  id: record.intakeRecordId ?? record.recordId ?? record.id,
   productId: record.productId,
   productName: record.productName ?? record.name ?? "상품명 없음",
   imageUrl: record.imageUrl ?? record.image ?? null,
@@ -104,16 +109,22 @@ export function addConsumptionRecord(product, consumedAt = new Date()) {
   return normalizeRecord(record);
 }
 
-export function deleteConsumptionRecord(recordId) {
-  const records = readLocalRecords();
-  const nextRecords = records.filter(
-    (record) => String(record.recordId ?? record.id) !== String(recordId),
+export async function deleteIntakeRecord(intakeRecordId) {
+  if (intakeRecordId == null || String(intakeRecordId).trim() === "") {
+    throw new Error("삭제할 섭취 기록 ID가 없습니다.");
+  }
+
+  const response = await authenticatedFetch(
+    apiUrl(`intakes/${encodeURIComponent(intakeRecordId)}`),
+    { method: "DELETE" },
   );
+  const result = await readJson(response);
 
-  if (nextRecords.length === records.length) return false;
+  if (!response.ok) {
+    throw new Error(result?.message || "섭취 기록 삭제에 실패했습니다.");
+  }
 
-  localStorage.setItem(LOCAL_RECORDS_KEY, JSON.stringify(nextRecords));
-  return true;
+  return result;
 }
 
 export async function getDailyRecords(date, { signal } = {}) {
