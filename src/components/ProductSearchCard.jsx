@@ -145,7 +145,7 @@ export default function ProductSearchCard({ product, recommendation = false }) {
       {meta.length > 0 && <Meta>{meta.join(" · ")}</Meta>}
       <Grade>
         {product.rank != null && `${product.rank}위 · `}
-        {recommendation ? `ZeroPick ${product.score}점` : `${product.score}점`}
+        {`${product.score}점`}
       </Grade>
       <Ingredients>
         {Array.isArray(product.keyIngredients) &&
