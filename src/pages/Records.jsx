@@ -373,7 +373,7 @@ export default function Records() {
 
     try {
       await deleteIntakeRecord(intakeRecordId);
-      const data = await getDailyRecords(date);
+      const data = await getDailyRecords(date, { forceRefresh: true });
       setState({ status: "success", data, error: "" });
       setOpenMenuId(null);
     } catch (error) {

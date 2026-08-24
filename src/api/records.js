@@ -6,8 +6,6 @@ import {
   readJson,
 } from "./client";
 
-const LOCAL_RECORDS_KEY = "zeropick:consumption-records";
-
 const EMPTY_NUTRIENTS = [
   { key: "sugar", label: "당류", percentage: 0, tone: "safe" },
   { key: "sodium", label: "나트륨", percentage: 0, tone: "safe" },
@@ -46,20 +44,6 @@ const normalizeRecord = (record) => ({
   ),
 });
 
-const readLocalRecords = () => {
-  try {
-    const records = JSON.parse(localStorage.getItem(LOCAL_RECORDS_KEY) || "[]");
-    return Array.isArray(records) ? records : [];
-  } catch {
-    return [];
-  }
-};
-
-const getLocalRecordsByDate = (date) =>
-  readLocalRecords()
-    .filter((record) => getKstDateKey(record.consumedAt) === date)
-    .map((record) => normalizeRecord({ ...record, isLocal: true }));
-
 const createNutrients = (records, source = {}) => {
   const totals = records.reduce(
     (result, record) => ({
@@ -91,22 +75,30 @@ const createNutrients = (records, source = {}) => {
   }));
 };
 
-export function addConsumptionRecord(product, consumedAt = new Date()) {
-  const timestamp = new Date(consumedAt).toISOString();
-  const records = readLocalRecords();
-  const record = {
-    recordId: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
-    productId: product.productId,
-    productName: product.productName,
-    imageUrl: product.imageUrl ?? null,
-    amount: product.weight ?? "1개 기준",
-    calories: Number(product.nutrition?.calories ?? product.calories) || 0,
-    nutrition: product.nutrition ?? {},
-    consumedAt: timestamp,
-  };
+export async function addConsumptionRecord(product, quantity = 1) {
+  if (product?.productId == null || String(product.productId).trim() === "") {
+    throw new Error("기록할 상품 ID가 없습니다.");
+  }
 
-  localStorage.setItem(LOCAL_RECORDS_KEY, JSON.stringify([...records, record]));
-  return normalizeRecord(record);
+  const params = new URLSearchParams({
+    productId: String(product.productId),
+    quantity: String(quantity),
+  });
+  const response = await authenticatedFetch(
+    apiUrl(`intake/today?${params.toString()}`),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    },
+  );
+  const result = await readJson(response);
+
+  if (!response.ok) {
+    throw new Error(result?.message || "섭취 기록 추가에 실패했습니다.");
+  }
+
+  return result;
 }
 
 export async function deleteIntakeRecord(intakeRecordId) {
@@ -115,7 +107,7 @@ export async function deleteIntakeRecord(intakeRecordId) {
   }
 
   const response = await authenticatedFetch(
-    apiUrl(`intakes/${encodeURIComponent(intakeRecordId)}`),
+    apiUrl(`intake/records/${encodeURIComponent(intakeRecordId)}`),
     { method: "DELETE" },
   );
   const result = await readJson(response);
@@ -127,23 +119,20 @@ export async function deleteIntakeRecord(intakeRecordId) {
   return result;
 }
 
-export async function getDailyRecords(date, { signal } = {}) {
+export async function getDailyRecords(date, { signal, forceRefresh = false } = {}) {
   if (date !== getKstDateKey()) {
-    const records = getLocalRecordsByDate(date);
     return {
-      totalCalories: records.reduce(
-        (sum, record) => sum + record.calories,
-        0,
-      ),
+      totalCalories: 0,
       recommendedCalories: 2800,
-      nutrients: createNutrients(records),
-      records,
+      nutrients: createNutrients([]),
+      records: [],
     };
   }
 
   const response = await deduplicatedGet(apiUrl("intake/today"), {
     signal,
     authenticated: true,
+    ...(forceRefresh ? { cache: "no-store" } : {}),
   });
   const result = await response.json();
 
@@ -152,10 +141,9 @@ export async function getDailyRecords(date, { signal } = {}) {
   }
 
   const data = result.data ?? result;
-  const records = [
-    ...(data.records ?? data.items ?? data.intakes ?? []).map(normalizeRecord),
-    ...getLocalRecordsByDate(date),
-  ];
+  const records = (data.records ?? data.items ?? data.intakes ?? []).map(
+    normalizeRecord,
+  );
   const nutrientSource = data.nutrients ?? data.nutritionPercentages ?? {};
   const nutrients = createNutrients(records, nutrientSource);
 

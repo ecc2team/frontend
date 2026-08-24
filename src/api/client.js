@@ -127,14 +127,18 @@ export async function authenticatedFetch(url, options = {}) {
 
 export function deduplicatedGet(
   url,
-  { signal, authenticated = false, headers = {}, credentials } = {},
+  { signal, authenticated = false, headers = {}, credentials, cache } = {},
 ) {
   const authScope = authenticated
     ? `authenticated:${localStorage.getItem("accessToken") || "anonymous"}`
     : "public";
-  const key = [authScope, url, credentials || "", serializeHeaders(headers)].join(
-    "::",
-  );
+  const key = [
+    authScope,
+    url,
+    credentials || "",
+    cache || "",
+    serializeHeaders(headers),
+  ].join("::");
 
   let request = inFlightGetRequests.get(key);
 
@@ -143,6 +147,7 @@ export function deduplicatedGet(
       method: "GET",
       headers,
       ...(credentials ? { credentials } : {}),
+      ...(cache ? { cache } : {}),
     };
     request = (authenticated
       ? authenticatedFetch(url, options)
