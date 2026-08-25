@@ -5,8 +5,7 @@ import {
   deduplicatedGet,
   readJson,
 } from "./client";
-
-const LOCAL_RECORDS_KEY = "zeropick:consumption-records";
+import { getNutritionTarget } from "./profile";
 
 const EMPTY_NUTRIENTS = [
   { key: "sugar", label: "당류", percentage: 0, tone: "safe" },
@@ -25,88 +24,40 @@ const normalizePercentage = (value) =>
   Math.min(100, Math.max(0, Number(value) || 0));
 
 const normalizeRecord = (record) => ({
-  id: record.intakeRecordId ?? record.recordId ?? record.id,
+  id: record.intakeRecordId,
   productId: record.productId,
-  productName: record.productName ?? record.name ?? "상품명 없음",
+  productName: record.productName ?? "상품명 없음",
   imageUrl: record.imageUrl ?? record.image ?? null,
-  amount: record.amount ?? record.serving ?? record.quantityText ?? "",
-  calories: Number(record.calories ?? record.nutrition?.calories) || 0,
-  nutrition: record.nutrition ?? {},
-  isLocal: Boolean(record.isLocal),
-  consumedAt:
-    record.consumedAt ??
-    record.recordedAt ??
-    record.createdAt ??
-    record.timestamp,
-  time: formatKstTime(
-    record.consumedAt ??
-      record.recordedAt ??
-      record.createdAt ??
-      record.timestamp,
-  ),
+  amount: record.servingSize ?? "",
+  calories: Number(record.calories) || 0,
+  time: /^\d{2}:\d{2}/.test(record.intakeTime ?? "")
+    ? record.intakeTime.slice(0, 5)
+    : formatKstTime(record.intakeTime),
 });
 
-const readLocalRecords = () => {
-  try {
-    const records = JSON.parse(localStorage.getItem(LOCAL_RECORDS_KEY) || "[]");
-    return Array.isArray(records) ? records : [];
-  } catch {
-    return [];
-  }
-};
-
-const getLocalRecordsByDate = (date) =>
-  readLocalRecords()
-    .filter((record) => getKstDateKey(record.consumedAt) === date)
-    .map((record) => normalizeRecord({ ...record, isLocal: true }));
-
-const createNutrients = (records, source = {}) => {
-  const totals = records.reduce(
-    (result, record) => ({
-      sugar: result.sugar + (Number(record.nutrition?.sugar) || 0),
-      sodium: result.sodium + (Number(record.nutrition?.sodium) || 0),
-      saturatedFat:
-        result.saturatedFat +
-        (Number(record.nutrition?.saturatedFat) || 0),
-      protein: result.protein + (Number(record.nutrition?.protein) || 0),
-      fiber: result.fiber + (Number(record.nutrition?.fiber) || 0),
-    }),
-    { sugar: 0, sodium: 0, saturatedFat: 0, protein: 0, fiber: 0 },
-  );
-  const dailyValues = {
-    sugar: 50,
-    sodium: 2000,
-    saturatedFat: 15,
-    protein: 55,
-    fiber: 25,
-  };
-
+const createNutrients = (source = {}) => {
   return EMPTY_NUTRIENTS.map((item) => ({
     ...item,
-    percentage: normalizePercentage(
-      Array.isArray(source)
-        ? source.find((value) => value.key === item.key)?.percentage
-        : source[item.key] ?? (totals[item.key] / dailyValues[item.key]) * 100,
-    ),
+    percentage: normalizePercentage(source[item.key]),
   }));
 };
 
-export function addConsumptionRecord(product, consumedAt = new Date()) {
-  const timestamp = new Date(consumedAt).toISOString();
-  const records = readLocalRecords();
-  const record = {
-    recordId: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`,
-    productId: product.productId,
-    productName: product.productName,
-    imageUrl: product.imageUrl ?? null,
-    amount: product.weight ?? "1개 기준",
-    calories: Number(product.nutrition?.calories ?? product.calories) || 0,
-    nutrition: product.nutrition ?? {},
-    consumedAt: timestamp,
-  };
+export async function addConsumptionRecord(product, quantity = 1) {
+  const response = await authenticatedFetch(apiUrl("intakes"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      productId: Number(product.productId),
+      quantity,
+    }),
+  });
+  const result = await readJson(response);
 
-  localStorage.setItem(LOCAL_RECORDS_KEY, JSON.stringify([...records, record]));
-  return normalizeRecord(record);
+  if (!response.ok) {
+    throw new Error(result?.message || "섭취 기록 추가에 실패했습니다.");
+  }
+
+  return result;
 }
 
 export async function deleteIntakeRecord(intakeRecordId) {
@@ -129,22 +80,22 @@ export async function deleteIntakeRecord(intakeRecordId) {
 
 export async function getDailyRecords(date, { signal } = {}) {
   if (date !== getKstDateKey()) {
-    const records = getLocalRecordsByDate(date);
     return {
-      totalCalories: records.reduce(
-        (sum, record) => sum + record.calories,
-        0,
-      ),
-      recommendedCalories: 2800,
-      nutrients: createNutrients(records),
-      records,
+      totalCalories: 0,
+      recommendedCalories: 0,
+      nutrients: createNutrients(),
+      records: [],
+      personalized: false,
     };
   }
 
-  const response = await deduplicatedGet(apiUrl("intake/today"), {
-    signal,
-    authenticated: true,
-  });
+  const [response, nutritionTarget] = await Promise.all([
+    deduplicatedGet(apiUrl("intakes/today"), {
+      signal,
+      authenticated: true,
+    }),
+    getNutritionTarget({ signal }),
+  ]);
   const result = await response.json();
 
   if (!response.ok) {
@@ -152,19 +103,29 @@ export async function getDailyRecords(date, { signal } = {}) {
   }
 
   const data = result.data ?? result;
-  const records = [
-    ...(data.records ?? data.items ?? data.intakes ?? []).map(normalizeRecord),
-    ...getLocalRecordsByDate(date),
-  ];
-  const nutrientSource = data.nutrients ?? data.nutritionPercentages ?? {};
-  const nutrients = createNutrients(records, nutrientSource);
+  const records = (data.intakeDetails ?? []).map(normalizeRecord);
+  const nutrientSource = {
+    sugar: data.nutrients?.sugarPercentage,
+    sodium: data.nutrients?.sodiumPercentage,
+    saturatedFat: data.nutrients?.saturatedFatPercentage,
+    protein: data.nutrients?.proteinPercentage,
+    fiber: data.nutrients?.carbohydratePercentage,
+  };
+  const nutrients = createNutrients(nutrientSource);
+  const targetCalories = Number(nutritionTarget.targetCalories);
+  const summaryTargetCalories = Number(data.summary?.targetCalories);
 
   return {
-    totalCalories:
-      Number(data.totalCalories) ||
-      records.reduce((sum, record) => sum + record.calories, 0),
-    recommendedCalories: Number(data.recommendedCalories) || 2800,
+    totalCalories: Number(data.summary?.totalCalories) || 0,
+    recommendedCalories:
+      (Number.isFinite(targetCalories) && targetCalories > 0
+        ? targetCalories
+        : null) ??
+      (Number.isFinite(summaryTargetCalories) && summaryTargetCalories > 0
+        ? summaryTargetCalories
+        : 0),
     nutrients,
     records,
+    personalized: Boolean(nutritionTarget.personalized),
   };
 }
