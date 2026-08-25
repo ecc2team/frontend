@@ -425,14 +425,19 @@ export default function ProductDetail() {
       </Page>
     );
   const product = state.product;
-  const handleRecord = () => {
+  const handleRecord = async () => {
     if (!localStorage.getItem("accessToken")) {
       navigate("/records");
       return;
     }
 
-    addConsumptionRecord(product, new Date());
-    navigate("/records");
+    setActionError("");
+    try {
+      await addConsumptionRecord(product, 1);
+      navigate("/records");
+    } catch (error) {
+      setActionError(error.message);
+    }
   };
   const handleAddToComparison = async () => {
     if (!localStorage.getItem("accessToken")) {
