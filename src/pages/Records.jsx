@@ -445,7 +445,7 @@ export default function Records() {
                         <img src={NUTRIENT_ICONS[nutrient.key]} alt="" />
                       </div>
                       <p>{nutrient.label}</p>
-                      <strong>{nutrient.percentage}%</strong>
+                      <strong>{Number(nutrient.percentage.toFixed(2))}%</strong>
                       <Track
                         $percentage={nutrient.percentage}
                         $tone={nutrient.tone}
