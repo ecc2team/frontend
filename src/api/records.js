@@ -5,6 +5,7 @@ import {
   deduplicatedGet,
   readJson,
 } from "./client";
+import { getNutritionTarget } from "./profile";
 
 const EMPTY_NUTRIENTS = [
   { key: "sugar", label: "당류", percentage: 0, tone: "safe" },
@@ -34,34 +35,10 @@ const normalizeRecord = (record) => ({
     : formatKstTime(record.intakeTime),
 });
 
-const createNutrients = (records, source = {}) => {
-  const totals = records.reduce(
-    (result, record) => ({
-      sugar: result.sugar + (Number(record.nutrition?.sugar) || 0),
-      sodium: result.sodium + (Number(record.nutrition?.sodium) || 0),
-      saturatedFat:
-        result.saturatedFat +
-        (Number(record.nutrition?.saturatedFat) || 0),
-      protein: result.protein + (Number(record.nutrition?.protein) || 0),
-      fiber: result.fiber + (Number(record.nutrition?.fiber) || 0),
-    }),
-    { sugar: 0, sodium: 0, saturatedFat: 0, protein: 0, fiber: 0 },
-  );
-  const dailyValues = {
-    sugar: 50,
-    sodium: 2000,
-    saturatedFat: 15,
-    protein: 55,
-    fiber: 25,
-  };
-
+const createNutrients = (source = {}) => {
   return EMPTY_NUTRIENTS.map((item) => ({
     ...item,
-    percentage: normalizePercentage(
-      Array.isArray(source)
-        ? source.find((value) => value.key === item.key)?.percentage
-        : source[item.key] ?? (totals[item.key] / dailyValues[item.key]) * 100,
-    ),
+    percentage: normalizePercentage(source[item.key]),
   }));
 };
 
@@ -105,16 +82,20 @@ export async function getDailyRecords(date, { signal } = {}) {
   if (date !== getKstDateKey()) {
     return {
       totalCalories: 0,
-      recommendedCalories: 2800,
-      nutrients: createNutrients([]),
+      recommendedCalories: 0,
+      nutrients: createNutrients(),
       records: [],
+      personalized: false,
     };
   }
 
-  const response = await deduplicatedGet(apiUrl("intakes/today"), {
-    signal,
-    authenticated: true,
-  });
+  const [response, nutritionTarget] = await Promise.all([
+    deduplicatedGet(apiUrl("intakes/today"), {
+      signal,
+      authenticated: true,
+    }),
+    getNutritionTarget({ signal }),
+  ]);
   const result = await response.json();
 
   if (!response.ok) {
@@ -130,12 +111,21 @@ export async function getDailyRecords(date, { signal } = {}) {
     protein: data.nutrients?.proteinPercentage,
     fiber: data.nutrients?.carbohydratePercentage,
   };
-  const nutrients = createNutrients(records, nutrientSource);
+  const nutrients = createNutrients(nutrientSource);
+  const targetCalories = Number(nutritionTarget.targetCalories);
+  const summaryTargetCalories = Number(data.summary?.targetCalories);
 
   return {
     totalCalories: Number(data.summary?.totalCalories) || 0,
-    recommendedCalories: Number(data.summary?.targetCalories) || 2800,
+    recommendedCalories:
+      (Number.isFinite(targetCalories) && targetCalories > 0
+        ? targetCalories
+        : null) ??
+      (Number.isFinite(summaryTargetCalories) && summaryTargetCalories > 0
+        ? summaryTargetCalories
+        : 0),
     nutrients,
     records,
+    personalized: Boolean(nutritionTarget.personalized),
   };
 }

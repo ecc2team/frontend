@@ -75,6 +75,31 @@ export async function getProfile({ signal } = {}) {
   return normalizeProfile(result.data);
 }
 
+export async function getNutritionTarget({ signal } = {}) {
+  const response = await deduplicatedGet(
+    apiUrl("users/me/nutrition-target"),
+    {
+      authenticated: true,
+      signal,
+    },
+  );
+  const result = await readJson(response);
+
+  if (!response.ok) {
+    const error = new Error(
+      result?.message || "권장 섭취량을 불러오지 못했습니다.",
+    );
+    error.status = response.status;
+    throw error;
+  }
+
+  if (!result?.data) {
+    throw new Error("권장 섭취량 응답 형식이 올바르지 않습니다.");
+  }
+
+  return result.data;
+}
+
 const toNullableNumber = (value) => {
   if (value === "" || value === null || value === undefined) return null;
 
