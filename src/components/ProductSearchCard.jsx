@@ -26,15 +26,18 @@ const Card = styled(Link)`
 `;
 const ImageBox = styled.div`
   width: 100%;
-  aspect-ratio: 143/112;
+  height: 112px;
   border-radius: 6px;
   background: #f5eff7;
   overflow: hidden;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   img {
     width: 100%;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     display: block;
     object-fit: contain;
     object-position: center;
