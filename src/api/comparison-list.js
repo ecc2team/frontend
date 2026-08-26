@@ -37,6 +37,7 @@ const normalizeComparisonProduct = (product) => ({
   productId: product.productId,
   productName: product.productName,
   imageUrl: product.imageUrl ?? product.image ?? null,
+  categoryCode: product.categoryCode ?? product.category?.code ?? null,
   calories: Number(product.nutrition?.calories ?? product.calories) || 0,
   weight: product.weight ?? "",
   score: Number(product.score ?? 0),

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import styled from "@emotion/styled";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Header from "../components/Header";
 import IngredientAnalysis from "../components/IngredientAnalysis";
 import NutritionInfo from "../components/NutritionInfo";
+import ProductImage from "../components/ProductImage";
 import { getProductDetail } from "../api/products";
 import { addConsumptionRecord } from "../api/records";
 import { addToComparisonList } from "../api/comparison-list";
@@ -323,20 +324,6 @@ const RecommendationItem = styled(Link)`
   }
 `;
 
-function RecommendationImage({ product }) {
-  const [failedImageUrl, setFailedImageUrl] = useState(null);
-
-  return product.imageUrl && failedImageUrl !== product.imageUrl ? (
-    <img
-      src={product.imageUrl}
-      alt={product.productName}
-      onError={() => setFailedImageUrl(product.imageUrl)}
-    />
-  ) : (
-    <span className="fallback">제품 이미지 없음</span>
-  );
-}
-
 const SearchAgain = styled(Link)`
   height: 50px;
   padding: 0 53px;
@@ -359,6 +346,7 @@ const Status = styled.div`
 
 export default function ProductDetail() {
   const { productId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [state, setState] = useState({
     status: "loading",
@@ -366,7 +354,6 @@ export default function ProductDetail() {
     error: "",
   });
   const [expanded, setExpanded] = useState(false);
-  const [failedImageUrl, setFailedImageUrl] = useState(null);
   const [actionError, setActionError] = useState("");
   const [recommendations, setRecommendations] = useState({
     productId: null,
@@ -379,7 +366,15 @@ export default function ProductDetail() {
       .then((product) => {
         if (!active) return;
         setActionError("");
-        setState({ status: "success", product, error: "" });
+        setState({
+          status: "success",
+          product: {
+            ...product,
+            categoryCode:
+              product.categoryCode ?? location.state?.categoryCode ?? null,
+          },
+          error: "",
+        });
 
         if (localStorage.getItem("accessToken")) {
           recordRecentProduct(product.productId).catch((error) => {
@@ -395,7 +390,7 @@ export default function ProductDetail() {
       active = false;
       controller.abort();
     };
-  }, [productId]);
+  }, [location.state?.categoryCode, productId]);
   useEffect(() => {
     if (!localStorage.getItem("accessToken")) return undefined;
 
@@ -480,15 +475,10 @@ export default function ProductDetail() {
         <Summary>
           <ProductVisual>
             <ImageBox>
-              {product.imageUrl && failedImageUrl !== product.imageUrl ? (
-                <img
-                  src={product.imageUrl}
-                  alt={product.productName}
-                  onError={() => setFailedImageUrl(product.imageUrl)}
-                />
-              ) : (
-                <span className="fallback">제품 이미지 없음</span>
-              )}
+              <ProductImage
+                product={product}
+                fallback={<span className="fallback">제품 이미지 없음</span>}
+              />
             </ImageBox>
             <ProductActions>
               <OutlineButton type="button" onClick={handleAddToComparison}>
@@ -546,10 +536,18 @@ export default function ProductDetail() {
                 <RecommendationItem
                   key={recommendedProduct.productId}
                   to={`/products/${encodeURIComponent(recommendedProduct.productId)}`}
+                  state={{
+                    categoryCode: recommendedProduct.categoryCode ?? null,
+                  }}
                   aria-label={`${recommendedProduct.productName} 상세 보기`}
                 >
                   <div className="visual">
-                    <RecommendationImage product={recommendedProduct} />
+                    <ProductImage
+                      product={recommendedProduct}
+                      fallback={
+                        <span className="fallback">제품 이미지 없음</span>
+                      }
+                    />
                   </div>
                   <strong>{recommendedProduct.productName}</strong>
                 </RecommendationItem>

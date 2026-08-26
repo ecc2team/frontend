@@ -1,6 +1,6 @@
-import { useState } from "react";
 import styled from "@emotion/styled";
 import { Link } from "react-router-dom";
+import ProductImage from "./ProductImage";
 
 const Card = styled(Link)`
   display: flex;
@@ -113,7 +113,6 @@ const Allergy = styled.p`
 `;
 
 export default function ProductSearchCard({ product, recommendation = false }) {
-  const [failedImageUrl, setFailedImageUrl] = useState(null);
   const meta =
     product.score != null
       ? [
@@ -130,18 +129,14 @@ export default function ProductSearchCard({ product, recommendation = false }) {
   return (
     <Card
       to={`/products/${encodeURIComponent(product.productId)}`}
+      state={{ categoryCode: product.categoryCode ?? null }}
       aria-label={`${product.productName} 상세 보기`}
     >
       <ImageBox>
-        {product.imageUrl && failedImageUrl !== product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt={product.productName}
-            onError={() => setFailedImageUrl(product.imageUrl)}
-          />
-        ) : (
-          <span className="fallback">제품 이미지 없음</span>
-        )}
+        <ProductImage
+          product={product}
+          fallback={<span className="fallback">제품 이미지 없음</span>}
+        />
       </ImageBox>
       <Name>{product.productName}</Name>
       {recommendation && product.matchedPreference && (

@@ -36,6 +36,8 @@ const throwRequestError = (response, result, fallbackMessage) => {
 const normalizeRecentProduct = (product) => ({
   productId: product.productId,
   productName: product.productName,
+  imageUrl: product.imageUrl ?? product.image ?? null,
+  categoryCode: product.categoryCode ?? product.category?.code ?? null,
   dietaryTags: Array.isArray(product.dietaryTags) ? product.dietaryTags : [],
   riskLevel: product.riskLevel ?? "SAFE",
   viewedAt: product.viewedAt,

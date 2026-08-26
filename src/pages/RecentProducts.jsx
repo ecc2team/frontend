@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import styled from "@emotion/styled";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
+import ProductImage from "../components/ProductImage";
 import { getRecentProducts } from "../api/recent-products";
 
 const Page = styled.div`
@@ -76,6 +77,14 @@ const ProductVisual = styled.div`
   color: #a032be;
   font-size: 42px;
   font-weight: 700;
+  overflow: hidden;
+  img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    object-position: center;
+  }
 `;
 const ProductName = styled.h2`
   margin: 14px 0 10px;
@@ -223,7 +232,12 @@ export default function RecentProducts() {
                   key={`${product.productId}-${product.viewedAt}`}
                   to={`/products/${encodeURIComponent(product.productId)}`}
                 >
-                  <ProductVisual aria-hidden="true">Z</ProductVisual>
+                  <ProductVisual>
+                    <ProductImage
+                      product={product}
+                      fallback={<span aria-hidden="true">Z</span>}
+                    />
+                  </ProductVisual>
                   <ProductName>{product.productName}</ProductName>
                   <Tags>
                     {product.dietaryTags.map((tag) => (

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "@emotion/styled";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
+import ProductImage from "../components/ProductImage";
 import { deleteIntakeRecord, getDailyRecords } from "../api/records";
 import { getKstDateKey, moveDate } from "../utils/dateTime";
 import sugarIcon from "../assets/nutrition-sugar.svg";
@@ -469,11 +470,11 @@ export default function Records() {
                     }
                   >
                     <span className="time">{record.time}</span>
-                    {record.imageUrl ? (
-                      <img src={record.imageUrl} alt="" />
-                    ) : (
-                      <div className="image-placeholder" />
-                    )}
+                    <ProductImage
+                      product={record}
+                      alt=""
+                      fallback={<div className="image-placeholder" />}
+                    />
                     <div>
                       <h3>{record.productName}</h3>
                       <p>{record.amount}</p>

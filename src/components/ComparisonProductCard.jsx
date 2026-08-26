@@ -1,7 +1,7 @@
-import { useState } from "react";
 import styled from "@emotion/styled";
 import removeCircle from "../assets/compare-remove-circle.svg";
 import removeLine from "../assets/compare-remove-line.svg";
+import ProductFallbackImage from "./ProductImage";
 
 const Card = styled.article`
   position: relative;
@@ -122,7 +122,6 @@ function ComparisonProductCard({
   onSelect,
   onRemove,
 }) {
-  const [failedImageUrl, setFailedImageUrl] = useState(null);
   const badges = product.badges ?? product.tags ?? [];
 
   return (
@@ -143,15 +142,10 @@ function ComparisonProductCard({
         <img src={removeLine} alt="" />
       </RemoveButton>
       <ProductImage>
-        {product.imageUrl && failedImageUrl !== product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt={product.productName}
-            onError={() => setFailedImageUrl(product.imageUrl)}
-          />
-        ) : (
-          <EmptyImage>제품 이미지 없음</EmptyImage>
-        )}
+        <ProductFallbackImage
+          product={product}
+          fallback={<EmptyImage>제품 이미지 없음</EmptyImage>}
+        />
       </ProductImage>
       <Name>{product.productName}</Name>
       <Badges>
