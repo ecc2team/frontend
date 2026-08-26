@@ -9,7 +9,7 @@ import {
 } from "./data/comparisonProducts.js";
 import { mockUser, mockTokens } from "./data/mockUser.js";
 import { recentProducts } from "./data/recentProducts.js";
-import { DEFAULT_CATEGORIES } from "../data/categories.js";
+import { mockCategories } from "./data/categories.js";
 import { mockDuplicates } from "../data/signupOptions.js";
 
 // TODO: Swagger의 실제 endpoint로 변경
@@ -184,7 +184,7 @@ export const handlers = [
     return HttpResponse.json({
       status: 200,
       message: "카테고리 목록 조회 성공",
-      data: DEFAULT_CATEGORIES,
+      data: mockCategories,
     });
   }),
 

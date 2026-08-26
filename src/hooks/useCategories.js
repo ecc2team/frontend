@@ -1,25 +1,20 @@
 import { useEffect, useState } from "react";
 import { getCategories } from "../api/categories";
-import {
-  DEFAULT_CATEGORIES,
-  selectSupportedCategories,
-} from "../data/categories";
 
 export default function useCategories() {
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    getCategories({ signal: controller.signal })
+    let active = true;
+    getCategories()
       .then((items) => {
-        const supported = selectSupportedCategories(items);
-        if (supported.length) setCategories(supported);
+        if (active) setCategories(items);
       })
-      .catch((error) => {
-        if (error.name !== "AbortError") setCategories(DEFAULT_CATEGORIES);
-      });
+      .catch(() => {});
 
-    return () => controller.abort();
+    return () => {
+      active = false;
+    };
   }, []);
 
   return categories;

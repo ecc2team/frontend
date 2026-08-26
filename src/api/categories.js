@@ -1,5 +1,8 @@
 import { apiUrl, deduplicatedGet, readJson } from "./client";
 
+let categoriesCache;
+let categoriesRequest;
+
 async function categoryGet(path, { signal } = {}) {
   const response = await deduplicatedGet(apiUrl(path), { signal });
   const result = await readJson(response);
@@ -11,12 +14,23 @@ async function categoryGet(path, { signal } = {}) {
   return result?.data;
 }
 
-export async function getCategories(options) {
-  const data = await categoryGet("categories", options);
-  if (!Array.isArray(data)) {
-    throw new Error("카테고리 목록 응답 형식이 올바르지 않습니다.");
-  }
-  return data;
+export function getCategories() {
+  if (categoriesCache) return Promise.resolve(categoriesCache);
+  if (categoriesRequest) return categoriesRequest;
+
+  categoriesRequest = categoryGet("categories")
+    .then((data) => {
+      if (!Array.isArray(data)) {
+        throw new Error("카테고리 목록 응답 형식이 올바르지 않습니다.");
+      }
+      categoriesCache = data;
+      return data;
+    })
+    .finally(() => {
+      categoriesRequest = undefined;
+    });
+
+  return categoriesRequest;
 }
 
 export async function getCategoryProducts(
