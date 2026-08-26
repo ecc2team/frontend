@@ -4,6 +4,7 @@ const normalizeRecommendation = (product) => ({
   productId: product.productId,
   productName: product.name,
   imageUrl: product.imageUrl ?? product.image ?? null,
+  categoryCode: product.categoryCode ?? product.category?.code ?? null,
   score: product.score,
   calories: product.calories,
   sugar: product.sugar,

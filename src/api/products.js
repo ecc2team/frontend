@@ -24,6 +24,7 @@ const normalizeSearchProduct = (product) => ({
   viewCount: Number(product.viewCount ?? 0),
   warningAdditive: Boolean(product.warningAdditive),
   imageUrl: product.imageUrl ?? product.image ?? null,
+  categoryCode: product.categoryCode ?? product.category?.code ?? null,
   summary: product.summary ?? "",
   calories: product.calories ?? product.nutrition?.calories ?? null,
   sugar: product.sugar ?? product.nutrition?.sugar ?? null,
@@ -95,6 +96,7 @@ const normalizeProductDetail = (product) => {
     summary:
       typeof product.summary === "string" ? product.summary.trim() : "",
     imageUrl: product.imageUrl ?? null,
+    categoryCode: product.categoryCode ?? product.category?.code ?? null,
     warningAdditive: Boolean(product.warningAdditive),
     nutrition: product.nutrition ?? {},
     keyIngredients: (product.keyIngredients ?? cautionIngredients)

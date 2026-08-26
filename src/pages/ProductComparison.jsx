@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "@emotion/styled";
 import { Link, Navigate } from "react-router-dom";
 import Header from "../components/Header";
+import FallbackProductImage from "../components/ProductImage";
 import {
   getComparisonList,
   removeFromComparisonList,
@@ -256,6 +257,8 @@ const mergeComparisonDetail = (comparisonProduct, detailProduct) => {
     ...comparisonProduct,
     ...detailProduct,
     imageUrl: detailProduct.imageUrl ?? comparisonProduct.imageUrl ?? null,
+    categoryCode:
+      detailProduct.categoryCode ?? comparisonProduct.categoryCode ?? null,
     keyIngredients:
       detailProduct.keyIngredients?.length > 0
         ? detailProduct.keyIngredients
@@ -270,16 +273,11 @@ const mergeComparisonDetail = (comparisonProduct, detailProduct) => {
 };
 
 function ComparisonImage({ product }) {
-  const [failedImageUrl, setFailedImageUrl] = useState(null);
-
-  return product.imageUrl && failedImageUrl !== product.imageUrl ? (
-    <img
-      src={product.imageUrl}
-      alt={product.productName}
-      onError={() => setFailedImageUrl(product.imageUrl)}
+  return (
+    <FallbackProductImage
+      product={product}
+      fallback={<span>제품 이미지 없음</span>}
     />
-  ) : (
-    <span>제품 이미지 없음</span>
   );
 }
 

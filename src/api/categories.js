@@ -3,7 +3,7 @@ import { apiUrl, deduplicatedGet, readJson } from "./client";
 let categoriesCache;
 let categoriesRequest;
 
-const normalizeCategoryProduct = (product) => ({
+const normalizeCategoryProduct = (product, categoryCode) => ({
   ...product,
   productId: product.productId ?? product.id,
   productName: product.productName ?? product.name,
@@ -16,6 +16,8 @@ const normalizeCategoryProduct = (product) => ({
     : [],
   viewCount: Number(product.viewCount ?? 0),
   imageUrl: product.imageUrl ?? product.image ?? null,
+  categoryCode:
+    product.categoryCode ?? product.category?.code ?? categoryCode ?? null,
 });
 
 async function categoryGet(path, { signal } = {}) {
@@ -71,7 +73,9 @@ export async function getCategoryProducts(
   }
   return {
     ...data,
-    content: data.content.map(normalizeCategoryProduct),
+    content: data.content.map((product) =>
+      normalizeCategoryProduct(product, categoryCode),
+    ),
   };
 }
 
@@ -89,5 +93,5 @@ export async function getCategoryBestProducts(
   if (!Array.isArray(data)) {
     throw new Error("카테고리 베스트 응답 형식이 올바르지 않습니다.");
   }
-  return data.map(normalizeCategoryProduct);
+  return data.map((product) => normalizeCategoryProduct(product, categoryCode));
 }

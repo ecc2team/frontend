@@ -28,6 +28,7 @@ const normalizeRecord = (record) => ({
   productId: record.productId,
   productName: record.productName ?? "상품명 없음",
   imageUrl: record.imageUrl ?? record.image ?? null,
+  categoryCode: record.categoryCode ?? record.category?.code ?? null,
   amount: record.servingSize ?? "",
   calories: Number(record.calories) || 0,
   time: /^\d{2}:\d{2}/.test(record.intakeTime ?? "")
