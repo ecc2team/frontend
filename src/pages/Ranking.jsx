@@ -3,7 +3,7 @@ import styled from "@emotion/styled";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import { getCategoryBestProducts } from "../api/categories";
-import { DEFAULT_CATEGORIES } from "../data/categories";
+import useCategories from "../hooks/useCategories";
 
 const Page = styled.div`
   min-height: 100svh;
@@ -105,22 +105,15 @@ const Status = styled.div`
   text-align: center;
 `;
 
-const initialState = () =>
-  Object.fromEntries(
-    DEFAULT_CATEGORIES.map(({ code }) => [
-      code,
-      { status: "loading", products: [], error: "" },
-    ]),
-  );
-
 export default function Ranking() {
-  const [rankings, setRankings] = useState(initialState);
+  const categories = useCategories();
+  const [rankings, setRankings] = useState({});
 
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
 
-    const requests = DEFAULT_CATEGORIES.map(async ({ code }) => {
+    const requests = categories.map(async ({ code }) => {
       try {
         const products = await getCategoryBestProducts(code, 5, {
           signal: controller.signal,
@@ -151,7 +144,7 @@ export default function Ranking() {
       active = false;
       controller.abort();
     };
-  }, []);
+  }, [categories]);
 
   return (
     <Page>
@@ -159,8 +152,12 @@ export default function Ranking() {
       <Main>
         <Title>카테고리별 TOP 5</Title>
         <Sections>
-          {DEFAULT_CATEGORIES.map(({ code, name }) => {
-            const state = rankings[code];
+          {categories.map(({ code, name }) => {
+            const state = rankings[code] ?? {
+              status: "loading",
+              products: [],
+              error: "",
+            };
             return (
               <Section key={code}>
                 <SectionTitle>{name}</SectionTitle>

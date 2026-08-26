@@ -6,16 +6,12 @@ import Pagination from "../components/Pagination";
 import ProductSearchCard from "../components/ProductSearchCard";
 import SortSection from "../components/SortSection";
 import {
-  getCategories,
   getCategoryBestProducts,
   getCategoryProducts,
 } from "../api/categories";
-import {
-  categoryPath,
-  isSupportedCategoryCode,
-  selectSupportedCategories,
-} from "../data/categories";
+import { categoryPath } from "../data/categories";
 import { SORT_VALUES } from "../data/sortOptions";
+import useCategories from "../hooks/useCategories";
 
 const PAGE_SIZE = 20;
 
@@ -100,9 +96,8 @@ export default function CategoryPage() {
   const page = Number.isInteger(parsedPage) && parsedPage >= 0 ? parsedPage : 0;
   const requestedSort = searchParams.get("sort") || "recommended";
   const sort = SORT_VALUES.has(requestedSort) ? requestedSort : "recommended";
-  const [categories, setCategories] = useState([]);
+  const categories = useCategories();
   const [selectedCode, setSelectedCode] = useState("");
-  const [categoryError, setCategoryError] = useState("");
   const [productsState, setProductsState] = useState({
     status: "idle",
     content: [],
@@ -117,26 +112,12 @@ export default function CategoryPage() {
   const resultsRef = useRef(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-    getCategories({ signal: controller.signal })
-      .then((items) => {
-        const supported = selectSupportedCategories(items);
-        setCategories(supported);
-        setCategoryError("");
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") setCategoryError(error.message);
-      });
-
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
     if (categories.length === 0) return;
     let active = true;
-    const requestedCode = isSupportedCategoryCode(routeCode)
+    const hasCategory = (code) => categories.some((item) => item.code === code);
+    const requestedCode = hasCategory(routeCode)
       ? routeCode
-      : isSupportedCategoryCode(legacyQueryCode)
+      : hasCategory(legacyQueryCode)
         ? legacyQueryCode
         : categories[0].code;
 
@@ -266,11 +247,9 @@ export default function CategoryPage() {
           ))}
         </Categories>
 
-        {categoryError ? (
-          <Status role="alert">{categoryError}</Status>
-        ) : (
+        {categories.length > 0 && (
           <>
-            <SectionTitle>{selectedCategory?.name || "카테고리"} BEST 5</SectionTitle>
+            <SectionTitle>{selectedCategory?.name ?? ""} BEST 5</SectionTitle>
             {bestState.status === "loading" && (
               <SectionStatus role="status">베스트 상품을 불러오고 있습니다...</SectionStatus>
             )}

@@ -8,11 +8,8 @@ import SearchBar from "../components/SearchBar";
 import SortSection from "../components/SortSection";
 import { searchProducts } from "../api/products";
 import { getCategoryProducts } from "../api/categories";
-import {
-  DEFAULT_CATEGORIES,
-  isSupportedCategoryCode,
-} from "../data/categories";
 import { SORT_VALUES } from "../data/sortOptions";
+import useCategories from "../hooks/useCategories";
 
 const Page = styled.div`
   min-height: 100svh;
@@ -97,12 +94,13 @@ const Grid = styled.div`
   }
 `;
 export default function ProductSearchResult() {
+  const categories = useCategories();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = (searchParams.get("query") || "").trim();
   const parsedPage = Number(searchParams.get("page") || 0);
   const page = Number.isInteger(parsedPage) && parsedPage >= 0 ? parsedPage : 0;
   const requestedCategory = (searchParams.get("category") || "").toUpperCase();
-  const category = isSupportedCategoryCode(requestedCategory)
+  const category = categories.some(({ code }) => code === requestedCategory)
     ? requestedCategory
     : "";
   const requestedSort = searchParams.get("sort") || "recommended";
@@ -118,6 +116,7 @@ export default function ProductSearchResult() {
 
   useEffect(() => {
     if (!query) return undefined;
+    if (requestedCategory && categories.length === 0) return undefined;
     const controller = new AbortController();
     let active = true;
     queueMicrotask(() => {
@@ -160,7 +159,7 @@ export default function ProductSearchResult() {
       active = false;
       controller.abort();
     };
-  }, [category, query, page, retryKey, sort]);
+  }, [categories.length, category, query, page, requestedCategory, retryKey, sort]);
 
   const search = (nextQuery) => {
     if (!nextQuery) {
@@ -217,7 +216,7 @@ export default function ProductSearchResult() {
           <Category type="button" $active={!category} onClick={() => changeCategory("")}>
             전체
           </Category>
-          {DEFAULT_CATEGORIES.map(({ code, name }) => (
+          {categories.map(({ code, name }) => (
             <Category
               type="button"
               key={code}
