@@ -74,18 +74,16 @@ const ImageBox = styled.div`
   height: 200px;
   border-radius: 8px;
   background: #f5eff7;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   img {
     width: 100%;
     height: 100%;
-    max-width: 100%;
-    max-height: 100%;
-    display: block;
     object-fit: contain;
     object-position: center;
-    transform: none;
+    display: block;
   }
   .fallback {
     color: #8f8686;
@@ -304,7 +302,9 @@ const RecommendationItem = styled(Link)`
   img {
     width: 100%;
     height: 100%;
+    display: block;
     object-fit: contain;
+    object-position: center;
   }
 
   .fallback {
@@ -322,6 +322,21 @@ const RecommendationItem = styled(Link)`
     white-space: nowrap;
   }
 `;
+
+function RecommendationImage({ product }) {
+  const [failedImageUrl, setFailedImageUrl] = useState(null);
+
+  return product.imageUrl && failedImageUrl !== product.imageUrl ? (
+    <img
+      src={product.imageUrl}
+      alt={product.productName}
+      onError={() => setFailedImageUrl(product.imageUrl)}
+    />
+  ) : (
+    <span className="fallback">제품 이미지 없음</span>
+  );
+}
+
 const SearchAgain = styled(Link)`
   height: 50px;
   padding: 0 53px;
@@ -534,14 +549,7 @@ export default function ProductDetail() {
                   aria-label={`${recommendedProduct.productName} 상세 보기`}
                 >
                   <div className="visual">
-                    {recommendedProduct.imageUrl ? (
-                      <img
-                        src={recommendedProduct.imageUrl}
-                        alt={recommendedProduct.productName}
-                      />
-                    ) : (
-                      <span className="fallback">제품 이미지 없음</span>
-                    )}
+                    <RecommendationImage product={recommendedProduct} />
                   </div>
                   <strong>{recommendedProduct.productName}</strong>
                 </RecommendationItem>

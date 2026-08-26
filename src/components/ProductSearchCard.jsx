@@ -26,16 +26,21 @@ const Card = styled(Link)`
 `;
 const ImageBox = styled.div`
   width: 100%;
-  aspect-ratio: 143/112;
+  height: 112px;
   border-radius: 6px;
   background: #f5eff7;
   overflow: hidden;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   img {
     width: 100%;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
     object-fit: contain;
+    object-position: center;
   }
   .fallback {
     padding: 12px;
@@ -108,7 +113,7 @@ const Allergy = styled.p`
 `;
 
 export default function ProductSearchCard({ product, recommendation = false }) {
-  const [imageFailed, setImageFailed] = useState(false);
+  const [failedImageUrl, setFailedImageUrl] = useState(null);
   const meta =
     product.score != null
       ? [
@@ -128,11 +133,11 @@ export default function ProductSearchCard({ product, recommendation = false }) {
       aria-label={`${product.productName} 상세 보기`}
     >
       <ImageBox>
-        {product.imageUrl && !imageFailed ? (
+        {product.imageUrl && failedImageUrl !== product.imageUrl ? (
           <img
             src={product.imageUrl}
             alt={product.productName}
-            onError={() => setImageFailed(true)}
+            onError={() => setFailedImageUrl(product.imageUrl)}
           />
         ) : (
           <span className="fallback">제품 이미지 없음</span>
