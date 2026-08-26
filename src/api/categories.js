@@ -3,6 +3,21 @@ import { apiUrl, deduplicatedGet, readJson } from "./client";
 let categoriesCache;
 let categoriesRequest;
 
+const normalizeCategoryProduct = (product) => ({
+  ...product,
+  productId: product.productId ?? product.id,
+  productName: product.productName ?? product.name,
+  score: Number(product.score ?? 0),
+  calories: product.calories ?? product.nutrition?.calories ?? null,
+  sugar: product.sugar ?? product.nutrition?.sugar ?? null,
+  warningAdditive: Boolean(product.warningAdditive),
+  keyIngredients: Array.isArray(product.keyIngredients)
+    ? product.keyIngredients
+    : [],
+  viewCount: Number(product.viewCount ?? 0),
+  imageUrl: product.imageUrl ?? product.image ?? null,
+});
+
 async function categoryGet(path, { signal } = {}) {
   const response = await deduplicatedGet(apiUrl(path), { signal });
   const result = await readJson(response);
@@ -56,20 +71,7 @@ export async function getCategoryProducts(
   }
   return {
     ...data,
-    content: data.content.map((product) => ({
-      ...product,
-      productId: product.productId,
-      productName: product.productName ?? product.name,
-      score: Number(product.score ?? 0),
-      calories: product.calories ?? product.nutrition?.calories ?? null,
-      sugar: product.sugar ?? product.nutrition?.sugar ?? null,
-      warningAdditive: Boolean(product.warningAdditive),
-      keyIngredients: Array.isArray(product.keyIngredients)
-        ? product.keyIngredients
-        : [],
-      viewCount: Number(product.viewCount ?? 0),
-      imageUrl: product.imageUrl ?? product.image ?? null,
-    })),
+    content: data.content.map(normalizeCategoryProduct),
   };
 }
 
@@ -87,5 +89,5 @@ export async function getCategoryBestProducts(
   if (!Array.isArray(data)) {
     throw new Error("카테고리 베스트 응답 형식이 올바르지 않습니다.");
   }
-  return data;
+  return data.map(normalizeCategoryProduct);
 }

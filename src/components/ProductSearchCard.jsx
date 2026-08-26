@@ -35,7 +35,9 @@ const ImageBox = styled.div`
   img {
     width: 100%;
     height: 100%;
+    display: block;
     object-fit: contain;
+    object-position: center;
   }
   .fallback {
     padding: 12px;
@@ -108,7 +110,7 @@ const Allergy = styled.p`
 `;
 
 export default function ProductSearchCard({ product, recommendation = false }) {
-  const [imageFailed, setImageFailed] = useState(false);
+  const [failedImageUrl, setFailedImageUrl] = useState(null);
   const meta =
     product.score != null
       ? [
@@ -128,11 +130,11 @@ export default function ProductSearchCard({ product, recommendation = false }) {
       aria-label={`${product.productName} 상세 보기`}
     >
       <ImageBox>
-        {product.imageUrl && !imageFailed ? (
+        {product.imageUrl && failedImageUrl !== product.imageUrl ? (
           <img
             src={product.imageUrl}
             alt={product.productName}
-            onError={() => setImageFailed(true)}
+            onError={() => setFailedImageUrl(product.imageUrl)}
           />
         ) : (
           <span className="fallback">제품 이미지 없음</span>
