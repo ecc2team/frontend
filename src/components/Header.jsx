@@ -134,7 +134,7 @@ const CategoryDropdown = styled.div`
   position: absolute;
   top: 100%;
   left: 50%;
-  width: 190px;
+  width: 220px;
   padding-top: 16px;
   visibility: hidden;
   opacity: 0;
@@ -174,6 +174,8 @@ const CategoryDropdownPanel = styled.div`
     font-size: 18px;
     line-height: 24px;
     text-align: left;
+    white-space: normal; 
+    word-break: keep-all;
 
     &:hover,
     &:focus-visible {
