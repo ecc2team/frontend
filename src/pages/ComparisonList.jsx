@@ -238,24 +238,36 @@ function ComparisonList() {
     products.length < MAX_COMPARISON_PRODUCTS && currentPage === totalPages;
 
   const toggleProduct = (productId) => {
-    setSelectedIds((current) => {
-      if (current.includes(productId)) {
-        return saveComparisonSelection(
-          current.filter((id) => id !== productId),
-        );
-      }
+  setSelectedIds((current) => {
+    if (current.includes(productId)) {
+      return saveComparisonSelection(
+        current.filter((id) => id !== productId),
+      );
+    }
 
-      if (current.length >= MAX_SELECTED_PRODUCTS) {
-        return current;
-      }
+    if (current.length >= MAX_SELECTED_PRODUCTS) {
+      return current;
+    }
 
-      const next = saveComparisonSelection([...current, productId]);
-      if (next.length === MAX_SELECTED_PRODUCTS) {
-        queueMicrotask(() => navigate("/compare/products"));
-      }
-      return next;
+    const targetCategory = products.find((p) => p.productId === productId)?.categoryCode;
+    const hasMismatch = current.some((id) => {
+      const category = products.find((p) => p.productId === id)?.categoryCode;
+      return category !== targetCategory;
     });
-  };
+
+    if (hasMismatch) {
+      setActionError("같은 카테고리의 상품만 함께 비교할 수 있습니다.");
+      return current;
+    }
+
+    setActionError("");
+    const next = saveComparisonSelection([...current, productId]);
+    if (next.length === MAX_SELECTED_PRODUCTS) {
+      queueMicrotask(() => navigate("/compare/products"));
+    }
+    return next;
+  });
+};
 
   const removeProduct = async (productId) => {
     setActionError("");
